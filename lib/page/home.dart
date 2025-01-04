@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../component/bottom.dart';
+import '../component/header.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -27,10 +28,7 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('My App'),
-        centerTitle: true,
-      ),
+      appBar: const Header(), // Call the custom Header component here
       body: _pages[_currentIndex],
       bottomNavigationBar: CustomBottomNavigation(
         currentIndex: _currentIndex,
