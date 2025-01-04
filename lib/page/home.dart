@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../component/bottom.dart';
 import '../component/header.dart';
 import '../component/slideshow.dart';
+import '../component/topcategories.dart';
+import '../component/reusablecard1.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -35,18 +37,63 @@ class _HomePageState extends State<HomePage> {
       'https://asset22.ckassets.com/resources/image/staticpage_images/Background-min-1728982477.png',
     ];
 
+    final List<Category> categories = [
+      const Category(imageUrl: 'https://cdn-icons-png.flaticon.com/512/59/59844.png', title: 'Clothing'),
+      const Category(imageUrl: 'https://cdn-icons-png.flaticon.com/512/59/59844.png', title: 'Electronics'),
+      const Category(imageUrl: 'https://cdn-icons-png.flaticon.com/512/59/59844.png', title: 'Home & Kitchen'),
+      const Category(imageUrl: 'https://cdn-icons-png.flaticon.com/512/59/59844.png', title: 'Sports'),
+      const Category(imageUrl: 'https://cdn-icons-png.flaticon.com/512/59/59844.png', title: 'Books'),
+      const Category(imageUrl: 'https://cdn-icons-png.flaticon.com/512/59/59844.png', title: 'Health'),
+    ];
+
     return Scaffold(
-      appBar: const Header(), // Call the custom Header component here
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(10.0),
-          child: BannerSlideshow(imageUrls: imageUrls),
-        ),
+  appBar: const Header(), // Call the custom Header component here
+  body: Center(
+    child: Padding(
+      padding: const EdgeInsets.all(10.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          BannerSlideshow(imageUrls: imageUrls), // First child
+          const SizedBox(height: 20), // Add spacing between components
+          TopCategories(categories: categories), // Second child
+           ReusableBannerComponent(
+                title: 'Trending Offers',
+                onViewAll: () {
+                  print('View All clicked');
+                },
+                banners: [
+                  BannerCardModel(
+                    imageUrl: 'https://asset22.ckassets.com/resources/image/staticpage_images/mCaffeine-Desktop%204-1735796309.png',
+                    buttonText: 'Grab',
+                    onButtonPressed: () {
+                      print('Grabbed Item 1');
+                    },
+                  ),
+                  BannerCardModel(
+                    imageUrl: 'https://asset22.ckassets.com/resources/image/staticpage_images/mCaffeine-Desktop%204-1735796309.png',
+                    buttonText: 'Grab',
+                    onButtonPressed: () {
+                      print('Grabbed Item 2');
+                    },
+                  ),
+                  BannerCardModel(
+                    imageUrl: 'https://asset22.ckassets.com/resources/image/staticpage_images/mCaffeine-Desktop%204-1735796309.png',
+                    buttonText: 'Grab',
+                    onButtonPressed: () {
+                      print('Grabbed Item 3');
+                    },
+                  ),
+                ],),
+        ],
       ),
-      bottomNavigationBar: CustomBottomNavigation(
-        currentIndex: _currentIndex,
-        onTap: _onTabTapped,
-      ),
-    );
+    ),
+  ),
+  bottomNavigationBar: CustomBottomNavigation(
+    currentIndex: _currentIndex,
+    onTap: _onTabTapped,
+  ),
+);
   }
 }
