@@ -4,6 +4,8 @@ import '../component/header.dart';
 import '../component/slideshow.dart';
 import '../component/topcategories.dart';
 import '../component/reusablecard1.dart';
+import '../util/linkopener.dart';
+
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -47,7 +49,7 @@ class _HomePageState extends State<HomePage> {
     ];
 
     return Scaffold(
-  appBar: const Header(), // Call the custom Header component here
+  appBar: const Header(), 
   body: Center(
     child: Padding(
       padding: const EdgeInsets.all(10.0),
@@ -55,9 +57,9 @@ class _HomePageState extends State<HomePage> {
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          BannerSlideshow(imageUrls: imageUrls), // First child
-          const SizedBox(height: 20), // Add spacing between components
-          TopCategories(categories: categories), // Second child
+          BannerSlideshow(imageUrls: imageUrls),  
+          const SizedBox(height: 20), 
+          TopCategories(categories: categories), 
            ReusableBannerComponent(
                 title: 'Trending Offers',
                 onViewAll: () {
@@ -67,9 +69,7 @@ class _HomePageState extends State<HomePage> {
                   BannerCardModel(
                     imageUrl: 'https://asset22.ckassets.com/resources/image/staticpage_images/mCaffeine-Desktop%204-1735796309.png',
                     buttonText: 'Grab',
-                    onButtonPressed: () {
-                      print('Grabbed Item 1');
-                    },
+                   onButtonPressed: () { openUrl('https://flutter.dev');},
                   ),
                   BannerCardModel(
                     imageUrl: 'https://asset22.ckassets.com/resources/image/staticpage_images/mCaffeine-Desktop%204-1735796309.png',
