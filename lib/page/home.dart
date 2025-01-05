@@ -5,7 +5,7 @@ import '../component/slideshow.dart';
 import '../component/topcategories.dart';
 import '../component/reusablecard1.dart';
 import '../util/linkopener.dart';
-
+import '../component/FamousBrands.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -32,7 +32,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-     final List<String> imageUrls = [
+    final List<String> imageUrls = [
       'https://asset22.ckassets.com/resources/image/staticpage_images/mCaffeine-Desktop%204-1735796309.png',
       'https://asset22.ckassets.com/resources/image/staticpage_images/Store-Desktop-Ajio-1735796225.png',
       'https://asset22.ckassets.com/resources/image/staticpage_images/Store-Desktop-Myntra-min-1735884857.png',
@@ -49,51 +49,82 @@ class _HomePageState extends State<HomePage> {
     ];
 
     return Scaffold(
-  appBar: const Header(), 
-  body: Center(
-    child: Padding(
-      padding: const EdgeInsets.all(10.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          BannerSlideshow(imageUrls: imageUrls),  
-          const SizedBox(height: 20), 
-          TopCategories(categories: categories), 
-           ReusableBannerComponent(
-                title: 'Trending Offers',
-                onViewAll: () {
-                  print('View All clicked');
-                },
-                banners: [
-                  BannerCardModel(
-                    imageUrl: 'https://asset22.ckassets.com/resources/image/staticpage_images/mCaffeine-Desktop%204-1735796309.png',
-                    buttonText: 'Grab',
-                   onButtonPressed: () { openUrl('https://flutter.dev');},
-                  ),
-                  BannerCardModel(
-                    imageUrl: 'https://asset22.ckassets.com/resources/image/staticpage_images/mCaffeine-Desktop%204-1735796309.png',
-                    buttonText: 'Grab',
-                    onButtonPressed: () {
-                      print('Grabbed Item 2');
-                    },
-                  ),
-                  BannerCardModel(
-                    imageUrl: 'https://asset22.ckassets.com/resources/image/staticpage_images/mCaffeine-Desktop%204-1735796309.png',
-                    buttonText: 'Grab',
-                    onButtonPressed: () {
-                      print('Grabbed Item 3');
-                    },
-                  ),
-                ],),
-        ],
+      appBar: const Header(),
+      body: SingleChildScrollView( // Makes the body scrollable vertically
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(10.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                BannerSlideshow(imageUrls: imageUrls),
+                const SizedBox(height: 20),
+                TopCategories(categories: categories),
+                ReusableBannerComponent(
+                  title: 'Trending Offers',
+                  onViewAll: () {
+                    print('View All clicked');
+                  },
+                  banners: [
+                    BannerCardModel(
+                      imageUrl: 'https://asset22.ckassets.com/resources/image/staticpage_images/mCaffeine-Desktop%204-1735796309.png',
+                      buttonText: 'Grab',
+                      onButtonPressed: () { openUrl('https://flutter.dev'); },
+                    ),
+                    BannerCardModel(
+                      imageUrl: 'https://asset22.ckassets.com/resources/image/staticpage_images/mCaffeine-Desktop%204-1735796309.png',
+                      buttonText: 'Grab',
+                      onButtonPressed: () {
+                        print('Grabbed Item 2');
+                      },
+                    ),
+                    BannerCardModel(
+                      imageUrl: 'https://asset22.ckassets.com/resources/image/staticpage_images/mCaffeine-Desktop%204-1735796309.png',
+                      buttonText: 'Grab',
+                      onButtonPressed: () {
+                        print('Grabbed Item 3');
+                      },
+                    ),
+                  ],
+                ),
+                FamousBrandsComponent(
+                  title: 'Famous Brands',
+                  brandCards: [
+                    BrandCardModel(
+                      logoUrl: 'https://images.thedermaco.com/TheDermaCoLogo2-min.png',
+                      tag: 'Sale Live Now',
+                      buttonText: 'Shop Now',
+                      onButtonPressed: () {
+                        // Handle button press for this brand
+                      },
+                    ),
+                    BrandCardModel(
+                      logoUrl: 'https://i.pinimg.com/originals/be/9e/e1/be9ee1b796cd20e54c8a0fd5cdbd15db.png',
+                      tag: 'Upto 35% OFF',
+                      buttonText: 'Get Discount',
+                      onButtonPressed: () {
+                        // Handle button press for this brand
+                      },
+                    ),
+                    BrandCardModel(
+                      logoUrl: 'https://i.pinimg.com/originals/be/9e/e1/be9ee1b796cd20e54c8a0fd5cdbd15db.png',
+                      buttonText: 'Explore',
+                      onButtonPressed: () {
+                        // Handle button press for this brand
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
-    ),
-  ),
-  bottomNavigationBar: CustomBottomNavigation(
-    currentIndex: _currentIndex,
-    onTap: _onTabTapped,
-  ),
-);
+      bottomNavigationBar: CustomBottomNavigation(
+        currentIndex: _currentIndex,
+        onTap: _onTabTapped,
+      ),
+    );
   }
 }

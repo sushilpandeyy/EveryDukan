@@ -24,7 +24,19 @@ class CustomBottomNavigation extends StatelessWidget {
       ),
       child: BottomNavigationBar(
         currentIndex: currentIndex,
-        onTap: onTap,
+        onTap: (index) {
+          if (index == 2) {
+            // Route to /shops when the "Shops" tab is clicked
+            Navigator.pushNamed(context, '/shops');
+          } else if(index == 0){
+            Navigator.pushNamed(context, '/');
+          } 
+          
+          else {
+            // Call the provided onTap function for other tabs
+            onTap(index);
+          }
+        },
         type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.white,
         selectedItemColor: Colors.blue,

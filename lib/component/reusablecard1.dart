@@ -14,58 +14,61 @@ class ReusableBannerComponent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Title and "View All"
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              GestureDetector(
-                onTap: onViewAll,
-                child: const Text(
-                  'View All',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.blue,
-                    fontWeight: FontWeight.w600,
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 16.0), // Top and bottom margin
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Title and "View All"
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 12),
-
-        // Horizontal Scrollable Banner Cards
-        SizedBox(
-          height: 220,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: banners.length,
-            itemBuilder: (context, index) {
-              final banner = banners[index];
-              return Padding(
-                padding: const EdgeInsets.only(left: 16.0, right: 8.0),
-                child: BannerCard(
-                  imageUrl: banner.imageUrl,
-                  buttonText: banner.buttonText,
-                  onButtonPressed: banner.onButtonPressed,
+                GestureDetector(
+                  onTap: onViewAll,
+                  child: const Text(
+                    'View All',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.blue,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
-              );
-            },
+              ],
+            ),
           ),
-        ),
-      ],
+          const SizedBox(height: 12),
+
+          // Horizontal Scrollable Banner Cards
+          SizedBox(
+            height: 220,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: banners.length,
+              itemBuilder: (context, index) {
+                final banner = banners[index];
+                return Padding(
+                  padding: const EdgeInsets.only(left: 16.0, right: 8.0),
+                  child: BannerCard(
+                    imageUrl: banner.imageUrl,
+                    buttonText: banner.buttonText,
+                    onButtonPressed: banner.onButtonPressed,
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

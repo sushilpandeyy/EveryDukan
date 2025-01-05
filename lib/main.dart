@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import './page/home.dart';
+import './page/shops.dart'; // Import the ShopScreen file
 
 void main() {
   runApp(MyApp());
@@ -14,7 +15,11 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: HomePage(),
+      initialRoute: '/', // Define the initial route
+      routes: {
+        '/': (context) => HomePage(),
+        '/shops': (context) => ShopScreen(), // Define the ShopScreen route
+      },
     );
   }
 }
