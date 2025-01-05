@@ -8,11 +8,14 @@ class Header extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       backgroundColor: Colors.transparent, // Transparent background
       elevation: 0, // No shadow or elevation
-      title: Center(
-        child: Image.asset(
-          'assets/logo.png', // Replace with your logo asset
-          height: 40, // Adjust size as needed
-        ),
+      title: Row(
+        mainAxisAlignment: MainAxisAlignment.center, // Center the logo
+        children: [
+          Image.asset(
+            'assets/logo.png', // Replace with your logo asset
+            height: 40, // Adjust size as needed
+          ),
+        ],
       ),
       leading: IconButton(
         icon: const Icon(Icons.menu, color: Colors.black), // Minimalist sidebar icon
@@ -22,11 +25,11 @@ class Header extends StatelessWidget implements PreferredSizeWidget {
       ),
       actions: [
         IconButton(
-          icon: const Icon(Icons.search, color: Colors.black), // Search icon
+          icon: const Icon(Icons.notifications, color: Colors.black), // Notification bell icon
           onPressed: () {
-            // Add your search functionality here
+            // Add your notification functionality here
           },
-        ),
+        )
       ],
     );
   }

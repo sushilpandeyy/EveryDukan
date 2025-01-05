@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../component/storecard.dart';
 import '../component/categoryfilter.dart';
 import '../component/FamousBrands.dart';
+import '../component/header.dart';
 import '../component/bottom.dart';
 
 class ShopScreen extends StatefulWidget {
@@ -11,6 +12,16 @@ class ShopScreen extends StatefulWidget {
 
 class _ShopScreenState extends State<ShopScreen> {
   final List<Map<String, String>> stores = [
+    {'name': 'ElectroWorld', 'logo': 'assets/electro.png', 'category': 'Electronics'},
+    {'name': 'FashionHub', 'logo': 'assets/fashion.png', 'category': 'Fashion'},
+    {'name': 'BookNest', 'logo': 'assets/books.png', 'category': 'Books'},
+    {'name': 'GadgetGalaxy', 'logo': 'assets/gadgets.png', 'category': 'Electronics'},
+    {'name': 'StyleCorner', 'logo': 'assets/style.png', 'category': 'Fashion'},
+    {'name': 'ElectroWorld', 'logo': 'assets/electro.png', 'category': 'Electronics'},
+    {'name': 'FashionHub', 'logo': 'assets/fashion.png', 'category': 'Fashion'},
+    {'name': 'BookNest', 'logo': 'assets/books.png', 'category': 'Books'},
+    {'name': 'GadgetGalaxy', 'logo': 'assets/gadgets.png', 'category': 'Electronics'},
+    {'name': 'StyleCorner', 'logo': 'assets/style.png', 'category': 'Fashion'},
     {'name': 'ElectroWorld', 'logo': 'assets/electro.png', 'category': 'Electronics'},
     {'name': 'FashionHub', 'logo': 'assets/fashion.png', 'category': 'Fashion'},
     {'name': 'BookNest', 'logo': 'assets/books.png', 'category': 'Books'},
@@ -37,11 +48,7 @@ class _ShopScreenState extends State<ShopScreen> {
 
     return Scaffold(
       backgroundColor: Colors.white, // Scaffold background color
-      appBar: AppBar(
-        title: const Text('Shops'),
-        backgroundColor: Colors.white, // AppBar background color
-        elevation: 0,
-      ),
+       appBar: const Header(),
       body: Column(
         children: [
           // Category Filter Component
