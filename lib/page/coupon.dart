@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../component/header.dart';
 import '../component/bottom.dart';
-import '../component/deallist.dart'; // Rename to couponlist.dart
+import '../component/deallist.dart'; 
+import '../component/sidebar.dart';
 
 class CouponScreen extends StatefulWidget {
   @override
@@ -41,7 +42,8 @@ class _CouponScreenState extends State<CouponScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const Header(),  // Use the Header component
+      appBar: const Header(), 
+      drawer: const SidebarDrawer(),
       body: CouponList(coupons: coupons), // Use CouponList component
       bottomNavigationBar: CustomBottomNavigation(
         currentIndex: _currentIndex,

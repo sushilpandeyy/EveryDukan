@@ -7,6 +7,7 @@ import '../component/reusablecard1.dart';
 import '../util/linkopener.dart';
 import '../component/FamousBrands.dart';
 import '../component/ReusableBanner.dart';
+import '../component/sidebar.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -51,6 +52,7 @@ class _HomePageState extends State<HomePage> {
 
     return Scaffold(
       appBar: const Header(),
+      drawer: const SidebarDrawer(),
       body: SingleChildScrollView( // Makes the body scrollable vertically
         child: Center(
           child: Padding(

@@ -4,6 +4,7 @@ import '../component/categoryfilter.dart';
 import '../component/FamousBrands.dart';
 import '../component/header.dart';
 import '../component/bottom.dart';
+import '../component/sidebar.dart';
 
 class ShopScreen extends StatefulWidget {
   @override
@@ -41,6 +42,7 @@ class _ShopScreenState extends State<ShopScreen> {
     return Scaffold(
       backgroundColor: Colors.white, // Scaffold background color
       appBar: const Header(),
+      drawer: const SidebarDrawer(),
       body: Column(
         children: [
           // Category Filter Component
