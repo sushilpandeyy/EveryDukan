@@ -17,26 +17,18 @@ class _ShopScreenState extends State<ShopScreen> {
     {'name': 'BookNest', 'logo': 'assets/books.png', 'category': 'Books'},
     {'name': 'GadgetGalaxy', 'logo': 'assets/gadgets.png', 'category': 'Electronics'},
     {'name': 'StyleCorner', 'logo': 'assets/style.png', 'category': 'Fashion'},
-    {'name': 'ElectroWorld', 'logo': 'assets/electro.png', 'category': 'Electronics'},
-    {'name': 'FashionHub', 'logo': 'assets/fashion.png', 'category': 'Fashion'},
-    {'name': 'BookNest', 'logo': 'assets/books.png', 'category': 'Books'},
-    {'name': 'GadgetGalaxy', 'logo': 'assets/gadgets.png', 'category': 'Electronics'},
-    {'name': 'StyleCorner', 'logo': 'assets/style.png', 'category': 'Fashion'},
-    {'name': 'ElectroWorld', 'logo': 'assets/electro.png', 'category': 'Electronics'},
-    {'name': 'FashionHub', 'logo': 'assets/fashion.png', 'category': 'Fashion'},
-    {'name': 'BookNest', 'logo': 'assets/books.png', 'category': 'Books'},
-    {'name': 'GadgetGalaxy', 'logo': 'assets/gadgets.png', 'category': 'Electronics'},
-    {'name': 'StyleCorner', 'logo': 'assets/style.png', 'category': 'Fashion'},
+    // Add more stores as needed
   ];
+  
   int _currentIndex = 2;
 
-    void _onTabTapped(int index) {
+  void _onTabTapped(int index) {
     setState(() {
       _currentIndex = index;
     });
   }
 
-  final List<String> categories = ['All', 'Electronics', 'Fashion', 'Books', 'Electronics', 'Fashion', 'Books'];
+  final List<String> categories = ['All', 'Electronics', 'Fashion', 'Books'];
 
   String selectedCategory = 'All';
 
@@ -48,7 +40,7 @@ class _ShopScreenState extends State<ShopScreen> {
 
     return Scaffold(
       backgroundColor: Colors.white, // Scaffold background color
-       appBar: const Header(),
+      appBar: const Header(),
       body: Column(
         children: [
           // Category Filter Component
@@ -73,20 +65,18 @@ class _ShopScreenState extends State<ShopScreen> {
               itemCount: filteredStores.length,
               itemBuilder: (context, index) {
                 return StoreCard(
-                  name: filteredStores[index]['name']!,
                   logoPath: filteredStores[index]['logo']!,
                   cardColor: Colors.blue, // Card primary color
-                  textColor: Colors.white, // Text color
                 );
               },
             ),
           )
         ],
       ),
-  bottomNavigationBar: CustomBottomNavigation(
-    currentIndex: _currentIndex,
-    onTap: _onTabTapped,
-  ),
+      bottomNavigationBar: CustomBottomNavigation(
+        currentIndex: _currentIndex,
+        onTap: _onTabTapped,
+      ),
     );
   }
 }

@@ -58,10 +58,13 @@ class ReusableBannerComponent extends StatelessWidget {
                 final banner = banners[index];
                 return Padding(
                   padding: const EdgeInsets.only(left: 16.0, right: 8.0),
-                  child: BannerCard(
-                    imageUrl: banner.imageUrl,
-                    buttonText: banner.buttonText,
-                    onButtonPressed: banner.onButtonPressed,
+                  child: GestureDetector(
+                    onTap: banner.onButtonPressed, // Trigger the onButtonPressed on card tap
+                    child: BannerCard(
+                      imageUrl: banner.imageUrl,
+                      buttonText: banner.buttonText,
+                      onButtonPressed: banner.onButtonPressed,
+                    ),
                   ),
                 );
               },

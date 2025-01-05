@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import './page/home.dart';
-import './page/shops.dart'; // Import the ShopScreen file
+import './page/shops.dart'; 
+import 'page/coupon.dart';
 
 void main() {
   runApp(MyApp());
@@ -19,6 +20,7 @@ class MyApp extends StatelessWidget {
       routes: {
         '/': (context) => HomePage(),
         '/shops': (context) => ShopScreen(), // Define the ShopScreen route
+        '/coupon': (context) => CouponScreen(),
       },
     );
   }

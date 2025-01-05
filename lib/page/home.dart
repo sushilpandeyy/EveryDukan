@@ -6,6 +6,7 @@ import '../component/topcategories.dart';
 import '../component/reusablecard1.dart';
 import '../util/linkopener.dart';
 import '../component/FamousBrands.dart';
+import '../component/ReusableBanner.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -88,34 +89,30 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ],
                 ),
-                FamousBrandsComponent(
-                  title: 'Famous Brands',
-                  brandCards: [
-                    BrandCardModel(
-                      logoUrl: 'https://images.thedermaco.com/TheDermaCoLogo2-min.png',
-                      tag: 'Sale Live Now',
-                      buttonText: 'Shop Now',
-                      onButtonPressed: () {
-                        // Handle button press for this brand
-                      },
-                    ),
-                    BrandCardModel(
-                      logoUrl: 'https://i.pinimg.com/originals/be/9e/e1/be9ee1b796cd20e54c8a0fd5cdbd15db.png',
-                      tag: 'Upto 35% OFF',
-                      buttonText: 'Get Discount',
-                      onButtonPressed: () {
-                        // Handle button press for this brand
-                      },
-                    ),
-                    BrandCardModel(
-                      logoUrl: 'https://i.pinimg.com/originals/be/9e/e1/be9ee1b796cd20e54c8a0fd5cdbd15db.png',
-                      buttonText: 'Explore',
-                      onButtonPressed: () {
-                        // Handle button press for this brand
-                      },
-                    ),
-                  ],
-                ),
+                ReusableBanner(
+  imageUrl: 'https://asset22.ckassets.com/resources/image/staticpage_images/mCaffeine-Desktop%204-1735796309.png',
+  onImageTapped: () {
+    // Define your action when the image is tapped
+    print('Image tapped');
+  }),
+  FamousBrandsComponent(
+  getTitle: () => "Top Brands for ${DateTime.now().year}", // Dynamic title
+  brandCards: [
+    BrandCardModel(
+      logoUrl: 'https://images.thedermaco.com/TheDermaCoLogo2-min.png',
+      tag: "New",
+      buttonText: "Shop Now",
+      onCardTap: () { openUrl('https://flutter.dev'); },
+      onButtonPressed: () { openUrl('https://flutter.dev'); },
+    ),
+    BrandCardModel(
+     logoUrl: 'https://i.pinimg.com/originals/be/9e/e1/be9ee1b796cd20e54c8a0fd5cdbd15db.png',
+      buttonText: "Discover",
+      onCardTap: () { openUrl('https://flutter.dev'); },
+      onButtonPressed: () { openUrl('https://flutter.dev'); },
+    ),
+  ],
+),
               ],
             ),
           ),

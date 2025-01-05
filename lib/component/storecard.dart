@@ -1,17 +1,13 @@
 import 'package:flutter/material.dart';
 
 class StoreCard extends StatelessWidget {
-  final String name;
   final String logoPath;
   final Color cardColor;
-  final Color textColor;
 
   const StoreCard({
     Key? key,
-    required this.name,
     required this.logoPath,
     required this.cardColor,
-    required this.textColor,
   }) : super(key: key);
 
   @override
@@ -30,13 +26,6 @@ class StoreCard extends StatelessWidget {
             fit: BoxFit.contain,
           ),
           const SizedBox(height: 10.0),
-          Text(
-            name,
-            style: TextStyle(
-              color: textColor,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
         ],
       ),
     );

@@ -31,7 +31,9 @@ class CustomBottomNavigation extends StatelessWidget {
           } else if(index == 0){
             Navigator.pushNamed(context, '/');
           } 
-          
+          else if(index == 3){
+            Navigator.pushNamed(context, '/coupon');
+          } 
           else {
             // Call the provided onTap function for other tabs
             onTap(index);
@@ -56,9 +58,9 @@ class CustomBottomNavigation extends StatelessWidget {
             label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.local_offer_outlined),
-            activeIcon: Icon(Icons.local_offer),
-            label: 'Deals',
+            icon: Icon(Icons.local_fire_department),  // Changed to fire icon
+            activeIcon: Icon(Icons.local_fire_department),  // Active state of fire icon
+            label: 'Deals',  // Keep the label 'Deals'
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.store_outlined),
@@ -66,9 +68,9 @@ class CustomBottomNavigation extends StatelessWidget {
             label: 'Shops',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.share_outlined),
-            activeIcon: Icon(Icons.share),
-            label: 'Refer',
+            icon: Icon(Icons.card_giftcard_outlined),  // Coupon icon
+            activeIcon: Icon(Icons.card_giftcard),  // Active state of coupon icon
+            label: 'Coupon',  // Changed the label to 'Coupon'
           ),
         ],
       ),
