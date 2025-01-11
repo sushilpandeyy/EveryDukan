@@ -73,9 +73,9 @@ export function Sidebar() {
       title: "Categories",
     },
     {
-      href: "/customers",
-      icon: <Users className="h-5 w-5" />,
-      title: "Customers",
+      href: "/dashboard/deal",
+      icon: <ShoppingCart className="h-5 w-5" />,
+      title: "Deals",
     },
     {
       href: "/settings",
