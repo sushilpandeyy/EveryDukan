@@ -95,14 +95,33 @@ class TicketCouponCard extends StatelessWidget {
                 radius: 20,
                 backgroundColor: Colors.white,
                 child: ClipOval(
-                  child: Image.asset(
-                    coupon.merchantLogo,
-                    width: 32,
-                    height: 32,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) =>
-                        Icon(Icons.store, color: coupon.accentColor),
-                  ),
+                 child: ClipOval(
+  child: Image.network(
+    coupon.merchantLogo, // External image URL
+    width: 32,
+    height: 32,
+    fit: BoxFit.cover,
+    errorBuilder: (context, error, stackTrace) => Icon(
+      Icons.store,
+      color: coupon.accentColor,
+      size: 32,
+    ),
+    loadingBuilder: (context, child, loadingProgress) {
+      if (loadingProgress == null) {
+        return child;
+      }
+      return Center(
+        child: CircularProgressIndicator(
+          value: loadingProgress.expectedTotalBytes != null
+              ? loadingProgress.cumulativeBytesLoaded /
+                  loadingProgress.expectedTotalBytes!
+              : null,
+          color: coupon.accentColor,
+        ),
+      );
+    },
+  ),
+),
                 ),
               ),
               SizedBox(width: 12),
@@ -384,15 +403,32 @@ class CouponDetailsSheet extends StatelessWidget {
             radius: 24,
             backgroundColor: Colors.white,
             child: ClipOval(
-              child: Image.asset(
-                coupon.merchantLogo,
-                width: 40,
-                height: 40,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) =>
-                    Icon(Icons.store, color: coupon.accentColor, size: 24),
-              ),
-            ),
+  child: Image.network(
+    coupon.merchantLogo, // External image URL
+    width: 32,
+    height: 32,
+    fit: BoxFit.cover,
+    errorBuilder: (context, error, stackTrace) => Icon(
+      Icons.store,
+      color: coupon.accentColor,
+      size: 32,
+    ),
+    loadingBuilder: (context, child, loadingProgress) {
+      if (loadingProgress == null) {
+        return child;
+      }
+      return Center(
+        child: CircularProgressIndicator(
+          value: loadingProgress.expectedTotalBytes != null
+              ? loadingProgress.cumulativeBytesLoaded /
+                  loadingProgress.expectedTotalBytes!
+              : null,
+          color: coupon.accentColor,
+        ),
+      );
+    },
+  ),
+),
           ),
           SizedBox(width: 12),
           Expanded(
