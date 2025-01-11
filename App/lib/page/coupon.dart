@@ -22,6 +22,10 @@ class _CouponScreenState extends State<CouponScreen> {
       category: "Electronics",
       backgroundColor: Color(0xFFE3F2FD),
       accentColor: Color(0xFF1976D2),
+      terms: [
+        "Valid for online purchases only",
+        "Not valid with other promotions",
+      ],
     ),
     // Add more coupons...
   ];
