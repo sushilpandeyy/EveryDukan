@@ -14,7 +14,7 @@ import {
   ChevronLeft,
   Menu,
   ShoppingCart,
-  Bell,
+  ChartColumnStacked,
   LogOut,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -68,9 +68,9 @@ export function Sidebar() {
       title: "Shops",
     },
     {
-      href: "/orders",
-      icon: <ShoppingCart className="h-5 w-5" />,
-      title: "Orders",
+      href: "/dashboard/category",
+      icon: <ChartColumnStacked className="h-5 w-5" />,
+      title: "Categories",
     },
     {
       href: "/customers",
