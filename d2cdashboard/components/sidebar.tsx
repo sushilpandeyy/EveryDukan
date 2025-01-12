@@ -10,12 +10,12 @@ import {
   Store,
   LayoutDashboard,
   Users,
-  Settings,
+  GalleryVertical,
   ChevronLeft,
   Menu,
   ShoppingCart,
   ChartColumnStacked,
-  LogOut,
+  TicketPercent,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -63,6 +63,11 @@ export function Sidebar() {
       title: "Dashboard",
     },
     {
+      href: "/dashboard/banners",
+      icon: <GalleryVertical className="h-5 w-5" />,
+      title: "Banners",
+    },
+    {
       href: "/dashboard/shop",
       icon: <Store className="h-5 w-5" />,
       title: "Shops",
@@ -78,9 +83,9 @@ export function Sidebar() {
       title: "Deals",
     },
     {
-      href: "/settings",
-      icon: <Settings className="h-5 w-5" />,
-      title: "Settings",
+      href: "/dashboard/coupon",
+      icon: <TicketPercent className="h-5 w-5" />,
+      title: "Coupons",
     },
   ];
 

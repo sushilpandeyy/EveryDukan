@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { Plus, Pencil, Trash2, Search } from 'lucide-react';
 import {
   Card,
@@ -160,6 +161,7 @@ export default function CouponsPage() {
                 <TableRow>
                   <TableHead>Title</TableHead>
                   <TableHead>Merchant</TableHead>
+                  <TableHead>Icon</TableHead>
                   <TableHead>Code</TableHead>
                   <TableHead>Expiration</TableHead>
                   <TableHead>Discount</TableHead>
@@ -183,7 +185,7 @@ export default function CouponsPage() {
                   filteredCoupons.map((coupon) => (
                     <TableRow key={coupon.id}>
                       <TableCell>{coupon.title}</TableCell>
-                      <TableCell>{coupon.merchantName}</TableCell>
+                      <TableCell><Image src={coupon.merchantLogo} alt={coupon.merchantName} width={50} height={50} /></TableCell> 
                       <TableCell>{coupon.couponCode}</TableCell>
                       <TableCell>{new Date(coupon.expirationDate).toLocaleDateString()}</TableCell>
                       <TableCell>{coupon.discount}</TableCell>
