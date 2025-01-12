@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.example.d2cdeals.app-mergeDebugResources-25:/values-pt/values-pt.xml",
+            "outputFile": "com.deals.d2c.app-mergeDebugResources-30:/values-pt/values-pt.xml",
             "map": [
                 {
                     "source": "/Users/sushilpandey/.gradle/caches/transforms-3/7f6d20225ac1174a3efad96609161b97/transformed/browser-1.8.0/res/values-pt/values-pt.xml",

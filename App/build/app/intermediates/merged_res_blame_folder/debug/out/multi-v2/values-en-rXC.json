@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.example.d2cdeals.app-mergeDebugResources-25:/values-en-rXC/values-en-rXC.xml",
+            "outputFile": "com.deals.d2c.app-mergeDebugResources-30:/values-en-rXC/values-en-rXC.xml",
             "map": [
                 {
                     "source": "/Users/sushilpandey/.gradle/caches/transforms-3/889ae3adf7a24645889ee22f4dad2cac/transformed/core-1.13.1/res/values-en-rXC/values-en-rXC.xml",

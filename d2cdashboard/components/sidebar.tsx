@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import {
   Store,
   LayoutDashboard,
-  Users,
+  House,
   GalleryVertical,
   ChevronLeft,
   Menu,
@@ -66,6 +66,11 @@ export function Sidebar() {
       href: "/dashboard/banners",
       icon: <GalleryVertical className="h-5 w-5" />,
       title: "Banners",
+    },
+    {
+      href: "/dashboard/components",
+      icon: <House className="h-5 w-5" />,
+      title: "Home",
     },
     {
       href: "/dashboard/shop",

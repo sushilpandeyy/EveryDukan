@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "898542021130",
+    "project_id": "d2c-sale",
+    "storage_bucket": "d2c-sale.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:898542021130:android:7a0fb66c83d6da41294df3",
+        "android_client_info": {
+          "package_name": "com.deals.d2c"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA7LIRAeaAQF6lSeB-xbuVi8TpAe1t2udk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
