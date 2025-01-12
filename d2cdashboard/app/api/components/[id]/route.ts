@@ -1,56 +1,58 @@
+// app/api/components/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/db';
-import Component from '@/models/Component';
+import mongoose from 'mongoose';
 
-interface RouteParams {
-  params: {
-    id: string;
-  };
-}
+// Define a dynamic schema that accepts any fields
+const DynamicSchema = new mongoose.Schema({
+  order: {
+    type: Number,
+    required: true,
+    default: 0
+  }
+}, {
+  timestamps: true,
+  strict: false // Allows any fields to be saved
+});
 
-export async function GET(request: NextRequest, { params }: RouteParams) {
+// Create or get the model
+const DynamicModel = mongoose.models.Component || 
+  mongoose.model('Component', DynamicSchema);
+
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
     await connectToDatabase();
-    const component = await Component.findById(params.id);
     
-    if (!component) {
+    if (!mongoose.Types.ObjectId.isValid(params.id)) {
       return NextResponse.json(
-        { message: 'Component not found' },
-        { status: 404 }
+        { message: 'Invalid ID' },
+        { status: 400 }
       );
     }
 
-    return NextResponse.json(component);
-  } catch (error) {
-    console.error('GET Component Error:', error);
-    return NextResponse.json(
-      { message: 'Internal server error' },
-      { status: 500 }
-    );
-  }
-}
-
-export async function PUT(request: NextRequest, { params }: RouteParams) {
-  try {
-    await connectToDatabase();
     const body = await request.json();
-
-    const updatedComponent = await Component.findByIdAndUpdate(
+    const updatedItem = await DynamicModel.findByIdAndUpdate(
       params.id,
-      { ...body, updatedAt: Date.now() },
-      { new: true, runValidators: true }
-    );
+      { ...body },
+      { 
+        new: true,
+        lean: true
+      }
+    ).exec();
 
-    if (!updatedComponent) {
+    if (!updatedItem) {
       return NextResponse.json(
-        { message: 'Component not found' },
+        { message: 'Item not found' },
         { status: 404 }
       );
     }
 
-    return NextResponse.json(updatedComponent);
+    return NextResponse.json(updatedItem);
   } catch (error) {
-    console.error('PUT Component Error:', error);
+    console.error('PUT Error:', error);
     return NextResponse.json(
       { message: 'Internal server error' },
       { status: 500 }
@@ -58,30 +60,56 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
     await connectToDatabase();
-    const deletedComponent = await Component.findByIdAndDelete(params.id);
-
-    if (!deletedComponent) {
+    
+    if (!mongoose.Types.ObjectId.isValid(params.id)) {
       return NextResponse.json(
-        { message: 'Component not found' },
-        { status: 404 }
+        { message: 'Invalid ID' },
+        { status: 400 }
       );
     }
 
-    // Reorder remaining components
-    await Component.updateMany(
-      { order: { $gt: deletedComponent.order } },
-      { $inc: { order: -1 } }
-    );
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    return NextResponse.json(
-      { message: 'Component deleted successfully' },
-      { status: 200 }
-    );
+    try {
+      const deletedItem = await DynamicModel.findById(params.id).session(session);
+      
+      if (!deletedItem) {
+        await session.abortTransaction();
+        return NextResponse.json(
+          { message: 'Item not found' },
+          { status: 404 }
+        );
+      }
+
+      await deletedItem.deleteOne({ session });
+
+      // Update orders for remaining items
+      await DynamicModel.updateMany(
+        { order: { $gt: deletedItem.order } },
+        { $inc: { order: -1 } },
+        { session }
+      );
+
+      await session.commitTransaction();
+      return NextResponse.json(
+        { message: 'Item deleted successfully' },
+        { status: 200 }
+      );
+    } catch (error) {
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      session.endSession();
+    }
   } catch (error) {
-    console.error('DELETE Component Error:', error);
+    console.error('DELETE Error:', error);
     return NextResponse.json(
       { message: 'Internal server error' },
       { status: 500 }
