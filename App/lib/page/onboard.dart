@@ -54,8 +54,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             },
             children: [
               _buildWelcomePage(),
-              _buildGenderSelectionPage(),
-              _buildContactPage(),
+              _buildGenderSelectionPage(), 
               _buildCategorySelectionPage(),
             ],
           ),
@@ -255,64 +254,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  Widget _buildContactPage() {
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            'Stay Connected (Optional)',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Add your email or phone number to receive personalized deals',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.grey.shade600,
-              height: 1.5,
-            ),
-          ),
-          const SizedBox(height: 40),
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 20),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade50,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey.shade200),
-            ),
-            child: TextField(
-              controller: _contactController,
-              decoration: InputDecoration(
-                hintText: 'Email or Phone Number (Optional)',
-                hintStyle: TextStyle(color: Colors.grey.shade400),
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.all(16),
-                prefixIcon: Icon(Icons.contact_mail_outlined, color: Colors.grey),
-              ),
-              keyboardType: TextInputType.emailAddress,
-              onChanged: (value) {
-                setState(() {
-                  _contactInfo = value;
-                });
-              },
-            ),
-          ),
-          const SizedBox(height: 20),
-          Text(
-            'You can skip this step if you prefer',
-            style: TextStyle(
-              color: Colors.grey.shade500,
-              fontSize: 12,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildCategorySelectionPage() {
     return Padding(
