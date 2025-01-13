@@ -12,11 +12,9 @@ class OnboardingScreen extends StatefulWidget {
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
-  final TextEditingController _contactController = TextEditingController();
   bool _isLastPage = false;
   
   String _selectedGender = '';
-  String _contactInfo = '';
   
   final Set<String> _selectedCategories = {
     'Fashion',
@@ -49,12 +47,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             controller: _pageController,
             onPageChanged: (index) {
               setState(() {
-                _isLastPage = index == 3;
+                _isLastPage = index == 2;
               });
             },
             children: [
               _buildWelcomePage(),
-              _buildGenderSelectionPage(), 
+              _buildGenderSelectionPage(),
               _buildCategorySelectionPage(),
             ],
           ),
@@ -84,7 +82,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           TextButton(
-            onPressed: () => _pageController.jumpToPage(3),
+            onPressed: () => _pageController.jumpToPage(2),
             child: const Text(
               'SKIP',
               style: TextStyle(fontWeight: FontWeight.w600),
@@ -93,7 +91,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           Center(
             child: SmoothPageIndicator(
               controller: _pageController,
-              count: 4,
+              count: 3,
               effect: ExpandingDotsEffect(
                 spacing: 8,
                 radius: 10,
@@ -254,7 +252,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-
   Widget _buildCategorySelectionPage() {
     return Padding(
       padding: const EdgeInsets.all(20),
@@ -401,44 +398,30 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  bool _isValidEmail(String email) {
-    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-    return emailRegex.hasMatch(email);
-  }
-
   void _updateOneSignalTags() {
     if (_selectedGender.isNotEmpty) {
       OneSignal.User.addTags({
         'gender': _selectedGender.toLowerCase(),
-        'preferences': '${_selectedGender.toLowerCase()}_${CategoryCode.generateCode(_selectedCategories)}'
+        'preferences': CategoryCode.generateCode(_selectedCategories)
       });
     }
   }
 
   Future<void> _savePreferences() async {
-    if (_contactInfo.isNotEmpty) {
-      if (_isValidEmail(_contactInfo)) {
-        await OneSignal.User.addEmail(_contactInfo);
-      } else {
-        await OneSignal.User.addSms(_contactInfo); 
-      }
-    }
-
     final String categoryCode = CategoryCode.generateCode(_selectedCategories);
-    final Map<String, String> tags = {
-      'preferences': '${_selectedGender.toLowerCase()}_$categoryCode'
-    };
-
-    await OneSignal.User.addTags(tags);
-    debugPrint('Saved preferences: ${_selectedGender.toLowerCase()}_$categoryCode');
-    debugPrint('Contact info: ${_contactInfo.isEmpty ? "Not provided" : _contactInfo}');
+    await OneSignal.User.addTags({
+      'gender': _selectedGender.toLowerCase(),
+      'preferences': categoryCode
+    });
+    
+    debugPrint('Saved gender: ${_selectedGender.toLowerCase()}');
+    debugPrint('Saved preferences: $categoryCode');
     debugPrint('Selected categories: ${_selectedCategories.join(", ")}');
   }
 
   @override
   void dispose() {
     _pageController.dispose();
-    _contactController.dispose();
     super.dispose();
   }
 }
@@ -452,13 +435,13 @@ class CategoryData {
 
 class CategoryCode {
   static const Map<String, String> categoryToCode = {
-    'Fashion': '-FASH-',
-    'Beauty': '-BEAUT-',
-    'Food': '-FOOD-',
-    'Electronics': '-ELEC-',
-    'Health': '-HEALTH-',
-    'Home': '-HOME-',
-    'Baby Care': '-BABY-',
+    'Fashion': 'F',
+    'Beauty': 'B',
+    'Food': 'D',
+    'Electronics': 'E',
+    'Health': 'H',
+    'Home': 'L',
+    'Baby Care': 'C',
   };
 
   static String generateCode(Set<String> selectedCategories) {
