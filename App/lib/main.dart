@@ -9,6 +9,7 @@ import './page/shops.dart';
 import 'page/coupon.dart';
 import 'page/deals.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart'; 
+import './page/onboard.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -33,6 +34,10 @@ void main() async {
   OneSignal.Debug.setLogLevel(OSLogLevel.verbose);
   OneSignal.initialize("a9a9e59d-c91d-487a-8121-0b231203406b");
 OneSignal.Notifications.requestPermission(true);
+OneSignal.User.addTags({"fashionPrefsM": true});
+  OneSignal.User.getTags().then((tags) {
+    print('OneSignal tags: $tags');
+  });
 
   runApp(MyApp());
 }
@@ -52,6 +57,7 @@ class MyApp extends StatelessWidget {
         '/shops': (context) => ShopScreen(),
         '/coupon': (context) => CouponScreen(),
         '/deals': (context) => DealsPage(),
+        '/onboard': (context) => OnboardingScreen(),
       },
     );
   }

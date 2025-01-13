@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../page/setting.dart';
 
 class SidebarDrawer extends StatelessWidget {
   const SidebarDrawer({super.key});
@@ -59,7 +60,7 @@ class SidebarDrawer extends StatelessWidget {
                   leading: const Icon(Icons.home),
                   title: const Text('Home'),
                   onTap: () {
-                    Navigator.pop(context);
+                    Navigator.pushNamed(context, '/onboard');
                     // Add navigation logic here
                   },
                 ),
@@ -75,8 +76,10 @@ class SidebarDrawer extends StatelessWidget {
                   leading: const Icon(Icons.settings),
                   title: const Text('Settings'),
                   onTap: () {
-                    Navigator.pop(context);
-                    // Add navigation logic here
+                   Navigator.push(
+  context,
+  MaterialPageRoute(builder: (context) => SettingsScreen()),
+);
                   },
                 ),
                 ListTile(
