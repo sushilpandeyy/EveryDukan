@@ -1,10 +1,11 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:io' show Platform;
 import 'firebase_options.dart';
 import 'package:flutter/material.dart';
- import './page/home.dart';
+import './page/home.dart';
 import './page/shops.dart';
 import 'page/coupon.dart';
 import 'page/deals.dart';
@@ -15,7 +16,7 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-FirebaseAnalytics analytics = FirebaseAnalytics.instance;
+  FirebaseAnalytics analytics = FirebaseAnalytics.instance;
 
   // Request notification permissions
   final notificationSettings = await FirebaseMessaging.instance.requestPermission(
@@ -28,6 +29,20 @@ FirebaseAnalytics analytics = FirebaseAnalytics.instance;
   // Get FCM token for this device
   final fcmToken = await FirebaseMessaging.instance.getToken();
   print('FCM Token: $fcmToken');
+
+  // Save FCM token to Firestore
+  if (fcmToken != null) {
+    try {
+      await FirebaseFirestore.instance.collection('fcmtokens').doc().set({
+        'token': fcmToken,
+        'createdAt': FieldValue.serverTimestamp(),
+        'platform': Platform.isIOS ? 'ios' : 'android',
+      });
+      print('FCM Token saved to Firestore');
+    } catch (e) {
+      print('Error saving FCM token to Firestore: $e');
+    }
+  }
 
   // Only try to get APNS token on iOS
   if (Platform.isIOS) {
