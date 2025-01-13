@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.deals.d2c.app-mergeDebugResources-48:/values-ko/values-ko.xml",
+            "outputFile": "com.deals.d2c.app-mergeDebugResources-59:/values-ko/values-ko.xml",
             "map": [
                 {
                     "source": "/Users/sushilpandey/.gradle/caches/transforms-3/68e142ef8359c595e6a0cf974c40276a/transformed/preference-1.2.1/res/values-ko/values-ko.xml",

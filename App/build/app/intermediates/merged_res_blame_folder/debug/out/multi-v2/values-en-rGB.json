@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.deals.d2c.app-mergeDebugResources-48:/values-en-rGB/values-en-rGB.xml",
+            "outputFile": "com.deals.d2c.app-mergeDebugResources-59:/values-en-rGB/values-en-rGB.xml",
             "map": [
                 {
                     "source": "/Users/sushilpandey/.gradle/caches/transforms-3/d4c03f8eccf892b96fd6fc8b065707c2/transformed/appcompat-1.1.0/res/values-en-rGB/values-en-rGB.xml",

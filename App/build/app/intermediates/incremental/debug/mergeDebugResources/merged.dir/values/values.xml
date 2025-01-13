@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:ns1="urn:oasis:names:tc:xliff:document:1.2">
     <attr format="color" name="animationBackgroundColor"/>
+    <attr format="reference" name="cardViewStyle"/>
     <attr format="reference" name="coordinatorLayoutStyle"/>
     <attr format="reference" name="drawerArrowStyle"/>
     <attr format="enum" name="finishPrimaryWithPlaceholder">
@@ -62,6 +63,10 @@
     <bool name="abc_allow_stacked_button_bar">false</bool>
     <bool name="abc_config_actionMenuItemAllCaps">true</bool>
     <bool name="config_materialPreferenceIconSpaceReserved">false</bool>
+    <bool name="enable_system_alarm_service_default">true</bool>
+    <bool name="enable_system_foreground_service_default">true</bool>
+    <bool name="enable_system_job_service_default">false</bool>
+    <bool name="workmanager_test_configuration">false</bool>
     <color name="abc_input_method_navigation_guard">@android:color/black</color>
     <color name="abc_search_url_text_normal">#7fa87f</color>
     <color name="abc_search_url_text_pressed">@android:color/black</color>
@@ -88,6 +93,10 @@
     <color name="button_material_light">#ffd6d7d7</color>
     <color name="call_notification_answer_color">#1d873b</color>
     <color name="call_notification_decline_color">#d93025</color>
+    <color name="cardview_dark_background">#FF424242</color>
+    <color name="cardview_light_background">#FFFFFFFF</color>
+    <color name="cardview_shadow_end_color">#03000000</color>
+    <color name="cardview_shadow_start_color">#37000000</color>
     <color name="common_google_signin_btn_text_dark_default">@android:color/white</color>
     <color name="common_google_signin_btn_text_dark_disabled">#1F000000</color>
     <color name="common_google_signin_btn_text_dark_focused">@android:color/black</color>
@@ -221,6 +230,9 @@
     <dimen name="abc_text_size_title_material_toolbar">20dp</dimen>
     <dimen name="browser_actions_context_menu_max_width">500dp</dimen>
     <dimen name="browser_actions_context_menu_min_padding">20dp</dimen>
+    <dimen name="cardview_compat_inset_shadow">1dp</dimen>
+    <dimen name="cardview_default_elevation">2dp</dimen>
+    <dimen name="cardview_default_radius">2dp</dimen>
     <dimen name="compat_button_inset_horizontal_material">4dp</dimen>
     <dimen name="compat_button_inset_vertical_material">6dp</dimen>
     <dimen name="compat_button_padding_horizontal_material">8dp</dimen>
@@ -426,7 +438,16 @@
     <string name="fallback_menu_item_open_in_browser">Open in browser</string>
     <string name="fallback_menu_item_share_link">Share link</string>
     <string name="fcm_fallback_notification_channel_label">Miscellaneous</string>
+    <string name="location_permission_missing_message">Looks like this app doesn\'t have location services configured. Please see OneSignal docs for more information.</string>
+    <string name="location_permission_missing_title">App Missing Permission</string>
+    <string name="location_permission_name_for_title">Location</string>
+    <string name="location_permission_settings_message">sharing your device location</string>
     <string name="not_set">Not set</string>
+    <string name="notification_permission_name_for_title">Notifications</string>
+    <string name="notification_permission_settings_message">Notifications</string>
+    <string name="permission_not_available_message">You have previously denied %s. Please go to settings to enable.</string>
+    <string name="permission_not_available_open_settings_option">Settings</string>
+    <string name="permission_not_available_title">%s Not Available</string>
     <string name="preference_copied">
         \"<ns1:g example="Version 1.1" id="summary">%1$s</ns1:g>\" copied to clipboard.
     </string>
@@ -460,6 +481,13 @@
     <style name="Base.Animation.AppCompat.Tooltip" parent="android:Animation">
         <item name="android:windowEnterAnimation">@anim/abc_tooltip_enter</item>
         <item name="android:windowExitAnimation">@anim/abc_tooltip_exit</item>
+    </style>
+    <style name="Base.CardView" parent="android:Widget">
+        <item name="cardCornerRadius">@dimen/cardview_default_radius</item>
+        <item name="cardElevation">@dimen/cardview_default_elevation</item>
+        <item name="cardMaxElevation">@dimen/cardview_default_elevation</item>
+        <item name="cardUseCompatPadding">false</item>
+        <item name="cardPreventCornerOverlap">true</item>
     </style>
     <style name="Base.DialogWindowTitle.AppCompat" parent="android:Widget">
         <item name="android:maxLines">1</item>
@@ -1523,6 +1551,14 @@
         <item name="switchPreferenceCompatStyle">@style/Preference.SwitchPreferenceCompat.Material</item>
         <item name="switchPreferenceStyle">@style/Preference.SwitchPreference.Material</item>
         <item name="preferenceCategoryTitleTextAppearance">@style/TextAppearance.AppCompat.Body2</item>
+    </style>
+    <style name="CardView" parent="Base.CardView">
+    </style>
+    <style name="CardView.Dark">
+        <item name="cardBackgroundColor">@color/cardview_dark_background</item>
+    </style>
+    <style name="CardView.Light">
+        <item name="cardBackgroundColor">@color/cardview_light_background</item>
     </style>
     <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
         
@@ -2768,6 +2804,34 @@
         <attr format="reference" name="queryPatterns"/>
         
         <attr format="boolean" name="shortcutMatchRequired"/>
+    </declare-styleable>
+    <declare-styleable name="CardView">
+        
+        <attr format="color" name="cardBackgroundColor"/>
+        
+        <attr format="dimension" name="cardCornerRadius"/>
+        
+        <attr format="dimension" name="cardElevation"/>
+        
+        <attr format="dimension" name="cardMaxElevation"/>
+        
+        <attr format="boolean" name="cardUseCompatPadding"/>
+        
+        <attr format="boolean" name="cardPreventCornerOverlap"/>
+        
+        <attr format="dimension" name="contentPadding"/>
+        
+        <attr format="dimension" name="contentPaddingLeft"/>
+        
+        <attr format="dimension" name="contentPaddingRight"/>
+        
+        <attr format="dimension" name="contentPaddingTop"/>
+        
+        <attr format="dimension" name="contentPaddingBottom"/>
+        
+        <attr name="android:minWidth"/>
+        
+        <attr name="android:minHeight"/>
     </declare-styleable>
     <declare-styleable name="CheckBoxPreference">
         
