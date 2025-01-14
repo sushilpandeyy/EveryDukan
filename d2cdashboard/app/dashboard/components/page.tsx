@@ -1,3 +1,4 @@
+// page.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -17,7 +18,7 @@ export default function ComponentsPage() {
     try {
       const response = await fetch('/api/components');
       const data = await response.json();
-      setComponents(data);
+      setComponents(data.sort((a: Component, b: Component) => a.order - b.order));
     } catch (error) {
       console.error('Error fetching components:', error);
     }
@@ -39,6 +40,7 @@ export default function ComponentsPage() {
     const [reorderedItem] = items.splice(result.source.index, 1);
     items.splice(result.destination.index, 0, reorderedItem);
 
+    // Update order numbers
     const updatedItems = items.map((item, index) => ({
       ...item,
       order: index,
@@ -59,6 +61,8 @@ export default function ComponentsPage() {
       });
     } catch (error) {
       console.error('Error reordering components:', error);
+      // Revert to original order if the API call fails
+      await fetchComponents();
     }
   };
 

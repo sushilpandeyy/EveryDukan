@@ -1,30 +1,27 @@
-// app/api/components/route.ts
+// app/api/components/reorder/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/db';
 import mongoose from 'mongoose';
 
-// Define a dynamic schema that accepts any fields
 const DynamicSchema = new mongoose.Schema({
   order: {
     type: Number,
-    required: true,
-    default: 0
+    required: true
   }
 }, {
   timestamps: true,
-  strict: false // Allows any fields to be saved
+  strict: false
 });
 
-// Create or get the model
 const DynamicModel = mongoose.models.Component || 
   mongoose.model('Component', DynamicSchema);
-  
+
 export async function PUT(request: NextRequest) {
   try {
     await connectToDatabase();
-    const { items } = await request.json();
+    const { components } = await request.json();
 
-    if (!Array.isArray(items)) {
+    if (!Array.isArray(components)) {
       return NextResponse.json(
         { message: 'Invalid request body' },
         { status: 400 }
@@ -35,28 +32,28 @@ export async function PUT(request: NextRequest) {
     session.startTransaction();
 
     try {
-      // Update orders in bulk
+      // Update all components with their new order
       await Promise.all(
-        items.map(item =>
+        components.map(({ _id, order }) =>
           DynamicModel.findByIdAndUpdate(
-            item._id,
-            { order: item.order },
+            _id,
+            { order },
             { 
               new: true,
-              session
+              session 
             }
           )
         )
       );
 
-      const updatedItems = await DynamicModel.find()
+      // Fetch all components sorted by new order
+      const updatedComponents = await DynamicModel.find()
         .sort({ order: 1 })
         .lean()
-        .session(session)
-        .exec();
+        .session(session);
 
       await session.commitTransaction();
-      return NextResponse.json(updatedItems);
+      return NextResponse.json(updatedComponents);
     } catch (error) {
       await session.abortTransaction();
       throw error;
