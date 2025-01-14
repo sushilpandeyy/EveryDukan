@@ -94,7 +94,7 @@ class BrandCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // If there's a tag, display it
-            if (tag != null)
+            if (tag != null && tag!="")
               Container(
                 decoration: BoxDecoration(
                   color: Colors.red,
