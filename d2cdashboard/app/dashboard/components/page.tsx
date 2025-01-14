@@ -1,4 +1,3 @@
-// page.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -80,6 +79,7 @@ export default function ComponentsPage() {
         components={components}
         onDelete={handleDeleteComponent}
         onReorder={handleDragEnd}
+        onEdit={fetchComponents}
       />
     </div>
   );
