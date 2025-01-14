@@ -8,7 +8,7 @@ import ConfirmationModal from "@/components/confirmation-modal";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface Banner {
-  _id: string; // Changed from id to _id to match MongoDB
+  _id: string;
   title: string;
   bannerImage: string;
   isActive: boolean;
@@ -99,9 +99,9 @@ export default function BannerManagement() {
   };
 
   return (
-    <div className="p-8 space-y-6">
+    <div className="p-8 space-y-6 dark:bg-gray-900">
       <div className="flex justify-between items-center">
-        <h1 className="text-xl font-bold">Banner Management</h1>
+        <h1 className="text-xl font-bold dark:text-white">Banner Management</h1>
         <Button
           onClick={() => {
             setSelectedBanner(null);
@@ -119,45 +119,48 @@ export default function BannerManagement() {
       )}
 
       {isLoading ? (
-        <div className="text-center">Loading...</div>
+        <div className="text-center dark:text-gray-300">Loading...</div>
       ) : banners.length === 0 ? (
-        <div className="text-center">No banners found</div>
+        <div className="text-center dark:text-gray-300">No banners found</div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {banners.map((banner) => (
             <div
               key={banner._id}
-              className="rounded-lg shadow-lg overflow-hidden border bg-white relative"
+              className="rounded-lg shadow-lg overflow-hidden border dark:border-gray-700 bg-white dark:bg-gray-800 relative group"
             >
-              <img
-                src={banner.bannerImage}
-                alt={banner.title}
-                className="w-full h-48 object-cover"
-              />
+              <div className="w-full h-48 overflow-hidden">
+                <img
+                  src={banner.bannerImage}
+                  alt={banner.title}
+                  className="w-auto h-full mx-auto object-contain"
+                />
+              </div>
               <div className="p-4">
-                <h3 className="text-lg font-semibold">{banner.title}</h3>
-                <p className="text-sm text-gray-500">
+                <h3 className="text-lg font-semibold dark:text-white">{banner.title}</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
                   {banner.isActive ? "Active" : "Inactive"}
                 </p>
                 <a
                   href={banner.linkForClick}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-500 text-sm underline"
+                  className="text-blue-500 dark:text-blue-400 text-sm underline hover:text-blue-600 dark:hover:text-blue-300"
                 >
                   Visit Link
                 </a>
               </div>
-              <div className="absolute top-4 right-4 flex space-x-2">
+              <div className="absolute top-4 right-4 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 <Button
                   variant="outline"
                   size="icon"
+                  className="bg-white dark:bg-gray-700 dark:border-gray-600 dark:hover:bg-gray-600"
                   onClick={() => {
                     setSelectedBanner(banner);
                     setIsModalOpen(true);
                   }}
                 >
-                  <Edit className="h-4 w-4" />
+                  <Edit className="h-4 w-4 dark:text-gray-200" />
                 </Button>
                 <Button
                   variant="destructive"

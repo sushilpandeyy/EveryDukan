@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import '../component/bottom.dart';
 import '../component/header.dart';
 import '../component/slideshow.dart';
@@ -18,111 +20,115 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _currentIndex = 0;
+  List<dynamic> _components = [];
+  bool _isLoading = true;
 
-  final List<Widget> _pages = [
-    const Center(child: Text('Home Content')),
-    const Center(child: Text('Deals Content')),
-    const Center(child: Text('Shops Content')),
-    const Center(child: Text('Refer Content')),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    fetchHomeData();
+  }
 
-  void _onTabTapped(int index) {
-    setState(() {
-      _currentIndex = index;
-    });
+  Future<void> fetchHomeData() async {
+    try {
+      final response = await http.get(
+        Uri.parse('https://19ax8udl06.execute-api.ap-south-1.amazonaws.com/home'),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          _components = data['components'];
+          _isLoading = false;
+        });
+      } else {
+        throw Exception('Failed to load home data');
+      }
+    } catch (e) {
+      print('Error fetching home data: $e');
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Widget _buildComponent(Map<String, dynamic> component) {
+    switch (component['type']) {
+      case 'ReusableBanner':
+        return ReusableBannerComponent(
+          title: component['title'],
+          onViewAll: () {
+            print('View All clicked');
+          },
+          banners: (component['banners'] as List).map((banner) => 
+            BannerCardModel(
+              imageUrl: banner['imageUrl'],
+              buttonText: 'Grab',
+              onButtonPressed: () => openUrl(banner['clickUrl']),
+            )
+          ).toList(),
+        );
+
+      case 'BannerCard':
+        return ReusableBanner(
+          imageUrl: component['imageUrl'],
+          onImageTapped: () => openUrl(component['clickUrl']),
+        );
+
+      case 'BrandCard':
+        return FamousBrandsComponent(
+          getTitle: () => component['title'],
+          brandCards: (component['brands'] as List).map((brand) =>
+            BrandCardModel(
+              logoUrl: brand['logoUrl'],
+              tag: brand['tag'],
+              buttonText: brand['buttonText'],
+              onCardTap: () => openUrl(brand['clickUrl']),
+              onButtonPressed: () => openUrl(brand['clickUrl']),
+            )
+          ).toList(),
+        );
+
+      default:
+        return const SizedBox.shrink();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final List<String> imageUrls = [
-      'https://asset22.ckassets.com/resources/image/staticpage_images/mCaffeine-Desktop%204-1735796309.png',
-      'https://asset22.ckassets.com/resources/image/staticpage_images/Store-Desktop-Ajio-1735796225.png',
-      'https://asset22.ckassets.com/resources/image/staticpage_images/Store-Desktop-Myntra-min-1735884857.png',
-      'https://asset22.ckassets.com/resources/image/staticpage_images/Background-min-1728982477.png',
-    ];
-
-    final List<Category> categories = [
-      const Category(imageUrl: 'https://cdn-icons-png.flaticon.com/512/59/59844.png', title: 'Clothing'),
-      const Category(imageUrl: 'https://cdn-icons-png.flaticon.com/512/59/59844.png', title: 'Electronics'),
-      const Category(imageUrl: 'https://cdn-icons-png.flaticon.com/512/59/59844.png', title: 'Home & Kitchen'),
-      const Category(imageUrl: 'https://cdn-icons-png.flaticon.com/512/59/59844.png', title: 'Sports'),
-      const Category(imageUrl: 'https://cdn-icons-png.flaticon.com/512/59/59844.png', title: 'Books'),
-      const Category(imageUrl: 'https://cdn-icons-png.flaticon.com/512/59/59844.png', title: 'Health'),
-    ];
-
     return Scaffold(
       appBar: const Header(),
       drawer: const SidebarDrawer(),
-      body: SingleChildScrollView( // Makes the body scrollable vertically
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(10.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                 Slideshow(),
-                const SizedBox(height: 20),
-                TopCategories(categories: categories),
-                ReusableBannerComponent(
-                  title: 'Trending Offers',
-                  onViewAll: () {
-                    print('View All clicked');
-                  },
-                  banners: [
-                    BannerCardModel(
-                      imageUrl: 'https://asset22.ckassets.com/resources/image/staticpage_images/mCaffeine-Desktop%204-1735796309.png',
-                      buttonText: 'Grab',
-                      onButtonPressed: () { openUrl('https://flutter.dev'); },
-                    ),
-                    BannerCardModel(
-                      imageUrl: 'https://asset22.ckassets.com/resources/image/staticpage_images/mCaffeine-Desktop%204-1735796309.png',
-                      buttonText: 'Grab',
-                      onButtonPressed: () {
-                        print('Grabbed Item 2');
-                      },
-                    ),
-                    BannerCardModel(
-                      imageUrl: 'https://asset22.ckassets.com/resources/image/staticpage_images/mCaffeine-Desktop%204-1735796309.png',
-                      buttonText: 'Grab',
-                      onButtonPressed: () {
-                        print('Grabbed Item 3');
-                      },
-                    ),
-                  ],
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(10.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Slideshow(),
+                      const SizedBox(height: 20),
+                      ..._components.map((component) => Column(
+                        children: [
+                          _buildComponent(component),
+                          const SizedBox(height: 20),
+                        ],
+                      )).toList(),
+                    ],
+                  ),
                 ),
-                ReusableBanner(
-  imageUrl: 'https://asset22.ckassets.com/resources/image/staticpage_images/mCaffeine-Desktop%204-1735796309.png',
-  onImageTapped: () {
-    // Define your action when the image is tapped
-    print('Image tapped');
-  }),
-  FamousBrandsComponent(
-  getTitle: () => "Top Brands for ${DateTime.now().year}", // Dynamic title
-  brandCards: [
-    BrandCardModel(
-      logoUrl: 'https://images.thedermaco.com/TheDermaCoLogo2-min.png',
-      tag: "New",
-      buttonText: "Shop Now",
-      onCardTap: () { openUrl('https://flutter.dev'); },
-      onButtonPressed: () { openUrl('https://flutter.dev'); },
-    ),
-    BrandCardModel(
-     logoUrl: 'https://i.pinimg.com/originals/be/9e/e1/be9ee1b796cd20e54c8a0fd5cdbd15db.png',
-      buttonText: "Discover",
-      onCardTap: () { openUrl('https://flutter.dev'); },
-      onButtonPressed: () { openUrl('https://flutter.dev'); },
-    ),
-  ],
-),
-              ],
+              ),
             ),
-          ),
-        ),
-      ),
       bottomNavigationBar: CustomBottomNavigation(
         currentIndex: _currentIndex,
-        onTap: _onTabTapped,
+        onTap: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
       ),
     );
   }

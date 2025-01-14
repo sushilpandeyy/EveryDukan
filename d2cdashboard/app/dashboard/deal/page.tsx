@@ -554,10 +554,10 @@ export default function DealsPage() {
                       <TableCell>
                         <div className="space-y-1">
                           <p className="text-sm line-through text-muted-foreground">
-                            ${deal.originalPrice.toFixed(2)}
+                            ₹{deal.originalPrice.toFixed(2)}
                           </p>
                           <p className="font-medium text-green-600">
-                            ${deal.discountedPrice.toFixed(2)}
+                            ₹{deal.discountedPrice.toFixed(2)}
                           </p>
                           <p className="text-xs text-muted-foreground">
                             {Math.round(((deal.originalPrice - deal.discountedPrice) / deal.originalPrice) * 100)}% off
