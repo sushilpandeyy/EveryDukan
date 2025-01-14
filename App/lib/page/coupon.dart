@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import '../component/header.dart';
 import '../component/bottom.dart';
 import '../component/sidebar.dart';
@@ -10,27 +12,94 @@ class CouponScreen extends StatefulWidget {
 }
 
 class _CouponScreenState extends State<CouponScreen> {
-  final List<Coupon> coupons = [
-    Coupon(
-      title: "10% Off on Electronics",
-      merchantName: "TechStore",
-      merchantLogo: "https://cdn0.iconfinder.com/data/icons/most-usable-logos/120/Amazon-512.png",
-      couponCode: "ELEC10",
-      description: "Get 10% off on all electronics items.",
-      expirationDate: "2025-01-31",
-      discount: "10%",
-      category: "Electronics",
-      backgroundColor: Color(0xFFE3F2FD),
-      accentColor: Color(0xFF1976D2),
-      terms: [
-        "Valid for online purchases only",
-        "Not valid with other promotions",
-      ],
-    ),
-    // Add more coupons...
-  ];
-
+  final List<Coupon> _coupons = [];
+  bool _isLoading = false;
+  bool _hasNextPage = true;
+  final ScrollController _scrollController = ScrollController();
+  int _currentPage = 1;
   int _currentIndex = 3;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMoreCoupons();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      if (_hasNextPage && !_isLoading) {
+        _loadMoreCoupons();
+      }
+    }
+  }
+
+  Color _parseColor(String colorString) {
+    if (colorString.startsWith('#')) {
+      return Color(int.parse('0xFF${colorString.substring(1)}'));
+    } else if (colorString.startsWith('0x')) {
+      return Color(int.parse(colorString));
+    }
+    return Colors.blue; // Default color
+  }
+
+  Future<void> _loadMoreCoupons() async {
+    if (_isLoading || !_hasNextPage) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final response = await http.get(
+        Uri.parse('https://19ax8udl06.execute-api.ap-south-1.amazonaws.com/coupon?page=$_currentPage&limit=10'),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final coupons = data['Coupon'] as List;
+        final pagination = data['pagination'];
+
+        final newCoupons = coupons.map((coupon) => Coupon(
+          title: coupon['title'],
+          merchantName: coupon['merchantName'],
+          merchantLogo: coupon['merchantLogo'],
+          couponCode: coupon['couponCode'],
+          description: coupon['description'],
+          expirationDate: coupon['expirationDate'],
+          discount: coupon['discount'],
+          category: coupon['category'],
+          backgroundColor: _parseColor(coupon['backgroundColor']),
+          accentColor: _parseColor(coupon['accentColor']),
+          terms: List<String>.from(coupon['terms']),
+        )).toList();
+
+        setState(() {
+          _coupons.addAll(newCoupons);
+          _currentPage++;
+          _hasNextPage = pagination['hasNextPage'];
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _isLoading = false;
+        });
+        throw Exception('Failed to load coupons');
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      debugPrint('Error fetching coupons: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,22 +107,44 @@ class _CouponScreenState extends State<CouponScreen> {
       appBar: const Header(),
       drawer: const SidebarDrawer(),
       body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            SliverPadding(
-              padding: EdgeInsets.all(16),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) => Padding(
-                    padding: EdgeInsets.only(bottom: 16),
-                    child: TicketCouponCard(coupon: coupons[index]),
+        child: _coupons.isEmpty && _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : CustomScrollView(
+                controller: _scrollController,
+                slivers: [
+                  SliverPadding(
+                    padding: EdgeInsets.all(16),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          if (index == _coupons.length) {
+                            return _hasNextPage
+                                ? const Padding(
+                                    padding: EdgeInsets.all(16.0),
+                                    child: Center(child: CircularProgressIndicator()),
+                                  )
+                                : _coupons.isNotEmpty
+                                    ? Padding(
+                                        padding: const EdgeInsets.all(16.0),
+                                        child: Text(
+                                          'No more coupons available',
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(color: Colors.grey[600]),
+                                        ),
+                                      )
+                                    : const SizedBox.shrink();
+                          }
+                          return Padding(
+                            padding: EdgeInsets.only(bottom: 16),
+                            child: TicketCouponCard(coupon: _coupons[index]),
+                          );
+                        },
+                        childCount: _coupons.length + 1,
+                      ),
+                    ),
                   ),
-                  childCount: coupons.length,
-                ),
+                ],
               ),
-            ),
-          ],
-        ),
       ),
       bottomNavigationBar: CustomBottomNavigation(
         currentIndex: _currentIndex,
