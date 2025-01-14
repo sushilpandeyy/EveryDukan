@@ -29,7 +29,7 @@ class CategoryFilter extends StatelessWidget {
                 onTap: () => onCategorySelected(category),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: isSelected ? Colors.blue : Colors.grey[200],
+                    color: isSelected ? Colors.amber : Colors.grey[200],
                     borderRadius: BorderRadius.circular(20.0),
                   ),
                   padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),

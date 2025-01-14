@@ -47,7 +47,7 @@ class _CouponScreenState extends State<CouponScreen> {
     } else if (colorString.startsWith('0x')) {
       return Color(int.parse(colorString));
     }
-    return Colors.blue; // Default color
+    return Colors.amber; // Default color
   }
 
   Future<void> _loadMoreCoupons() async {

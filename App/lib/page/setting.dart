@@ -53,7 +53,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               'Fashion and Apparel',
               Icons.shopping_bag_outlined,
               fashionPrefs,
-              Colors.blue,
+              Colors.amber,
             ),
             _buildCategoryCard(
               'Beauty and Personal Care',

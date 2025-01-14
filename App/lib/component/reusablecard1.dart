@@ -38,7 +38,7 @@ class ReusableBannerComponent extends StatelessWidget {
                     'View All',
                     style: TextStyle(
                       fontSize: 16,
-                      color: Colors.blue,
+                      color: Colors.amber,
                       fontWeight: FontWeight.w600,
                     ),
                   ),

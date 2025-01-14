@@ -44,7 +44,7 @@ class CustomBottomNavigation extends StatelessWidget {
         },
         type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.white,
-        selectedItemColor: Colors.blue,
+        selectedItemColor: Colors.amber,
         unselectedItemColor: Colors.grey,
         selectedLabelStyle: const TextStyle(
           fontSize: 12,

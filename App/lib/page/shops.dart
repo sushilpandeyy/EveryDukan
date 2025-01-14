@@ -186,13 +186,13 @@ class _ShopScreenState extends State<ShopScreen> {
                         _selectedCategory = category.title;
                       });
                     },
-                    selectedColor: Colors.blue[100],
-                    checkmarkColor: Colors.blue,
+                    selectedColor: Colors.amber,
+                    checkmarkColor: Colors.amber,
                     backgroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                       side: BorderSide(
-                        color: isSelected ? Colors.blue : Colors.grey[300]!,
+                        color: isSelected ? Colors.amber : Colors.grey[300]!,
                       ),
                     ),
                   ),
@@ -290,7 +290,7 @@ class _ShopScreenState extends State<ShopScreen> {
       ),
     );
   }
-  
+
   Future<void> _launchUrl(String url) async {
     try {
       final uri = Uri.parse(url);
@@ -335,16 +335,16 @@ class CategoryFilter extends StatelessWidget {
               selected: isSelected,
               onSelected: (_) => onCategorySelected(category),
               backgroundColor: Colors.grey[200],
-              selectedColor: Colors.blue.withOpacity(0.2),
+              selectedColor: Colors.amber.withOpacity(0.2),
               labelStyle: TextStyle(
-                color: isSelected ? Colors.blue : Colors.black87,
+                color: isSelected ? Colors.amber : Colors.black87,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               ),
-              checkmarkColor: Colors.blue,
+              checkmarkColor: Colors.amber,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
                 side: BorderSide(
-                  color: isSelected ? Colors.blue : Colors.transparent,
+                  color: isSelected ? Colors.amber : Colors.transparent,
                   width: 1,
                 ),
               ),

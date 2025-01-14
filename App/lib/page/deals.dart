@@ -282,7 +282,7 @@ class _DealsPageState extends State<DealsPage> {
                         child: ElevatedButton(
                           onPressed: () => _launchURL(deal.shopUrl),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue[700],
+                            backgroundColor: Colors.amber[700],
                             foregroundColor: Colors.white,
                             elevation: 0,
                             padding: const EdgeInsets.symmetric(vertical: 8),

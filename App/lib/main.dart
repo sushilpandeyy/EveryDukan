@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io' show Platform;
-
 import 'firebase_options.dart';
 import './page/home.dart';
 import './page/shops.dart';
@@ -77,7 +76,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Shopping App',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        primarySwatch: Colors.amber,
         useMaterial3: true,
       ),
       home: const AppEntryPoint(),
