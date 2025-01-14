@@ -16,11 +16,28 @@ interface BannerCardFormProps {
 export function BannerCardForm({ component, onUpdate, isEditing }: BannerCardFormProps) {
   return (
     <div className="space-y-4">
-      <Input
-        placeholder="Section Title"
-        value={component.title}
-        onChange={(e) => onUpdate({ ...component, title: e.target.value })}
-      />
+      <div className="flex gap-4">
+        <div className="flex-1">
+          <Input
+            placeholder="Section Title"
+            value={component.title}
+            onChange={(e) => onUpdate({ ...component, title: e.target.value })}
+          />
+        </div>
+        <div className="w-32">
+          <Input
+            type="number"
+            placeholder="Order"
+            min={0}
+            value={component.order}
+            onChange={(e) => onUpdate({ 
+              ...component, 
+              order: parseInt(e.target.value) || 0 
+            })}
+          />
+        </div>
+      </div>
+
       <Card className="p-4">
         <div className="flex justify-between items-start mb-2">
           <h4 className="text-sm font-medium">Banner Details</h4>
