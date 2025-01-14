@@ -12,7 +12,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { PencilIcon } from 'lucide-react';
 import { Component } from '../types';
-import { ComponentForm } from './ComponentForm';
+import { ReusableBannerForm } from './edit/ReusableBannerForm';
+import { BannerCardForm } from './edit/BannerCardForm';
+import { BrandCardForm } from './edit/BrandCardForm';
 
 interface EditComponentDialogProps {
   component: Component;
@@ -21,15 +23,16 @@ interface EditComponentDialogProps {
 
 export function EditComponentDialog({ component, onEdit }: EditComponentDialogProps) {
   const [open, setOpen] = useState(false);
+  const [editingComponent, setEditingComponent] = useState<Component>(component);
 
-  const handleEdit = async (formData: any) => {
+  const handleEdit = async () => {
     try {
       const response = await fetch(`/api/components/${component._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(editingComponent),
       });
 
       if (!response.ok) throw new Error('Failed to update component');
@@ -41,6 +44,37 @@ export function EditComponentDialog({ component, onEdit }: EditComponentDialogPr
     }
   };
 
+  const renderForm = () => {
+    switch (editingComponent.type) {
+      case 'ReusableBanner':
+        return (
+          <ReusableBannerForm
+            component={editingComponent}
+            onUpdate={setEditingComponent}
+            isEditing={true}
+          />
+        );
+      case 'BannerCard':
+        return (
+          <BannerCardForm
+            component={editingComponent}
+            onUpdate={setEditingComponent}
+            isEditing={true}
+          />
+        );
+      case 'BrandCard':
+        return (
+          <BrandCardForm
+            component={editingComponent}
+            onUpdate={setEditingComponent}
+            isEditing={true}
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -48,15 +82,14 @@ export function EditComponentDialog({ component, onEdit }: EditComponentDialogPr
           <PencilIcon className="h-4 w-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Edit Component</DialogTitle>
+          <DialogTitle>Edit {component.type}</DialogTitle>
         </DialogHeader>
-        <ComponentForm 
-          onSubmit={handleEdit}
-          initialData={component}
-          submitLabel="Save Changes"
-        />
+        {renderForm()}
+        <Button onClick={handleEdit} className="mt-4">
+          Save Changes
+        </Button>
       </DialogContent>
     </Dialog>
   );
