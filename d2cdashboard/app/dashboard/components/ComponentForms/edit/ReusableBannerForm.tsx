@@ -35,13 +35,14 @@ export function ReusableBannerForm({ component, onUpdate, isEditing }: ReusableB
  };
 
  return (
-   <div className="space-y-4">
+   <div className="space-y-4 bg-background">
      <div className="flex gap-4">
        <div className="flex-1">
          <Input
            placeholder="Section Title"
            value={component.title}
            onChange={(e) => onUpdate({ ...component, title: e.target.value })}
+           className="bg-background border-input placeholder:text-muted-foreground"
          />
        </div>
        <div className="w-32">
@@ -54,19 +55,21 @@ export function ReusableBannerForm({ component, onUpdate, isEditing }: ReusableB
              ...component, 
              order: parseInt(e.target.value) || 0 
            })}
+           className="bg-background border-input placeholder:text-muted-foreground"
          />
        </div>
      </div>
      
      {component.banners?.map((banner, index) => (
-       <Card key={index} className="p-4">
+       <Card key={index} className="p-4 border border-border bg-card">
          <div className="flex justify-between items-start mb-2">
-           <h4 className="text-sm font-medium">Banner {index + 1}</h4>
+           <h4 className="text-sm font-medium text-foreground">Banner {index + 1}</h4>
            {(component.banners?.length || 0) > 1 && (
              <Button
                variant="ghost"
                size="sm"
                onClick={() => removeBanner(index)}
+               className="hover:bg-accent hover:text-accent-foreground"
              >
                <X className="h-4 w-4" />
              </Button>
@@ -77,16 +80,19 @@ export function ReusableBannerForm({ component, onUpdate, isEditing }: ReusableB
              placeholder="Banner Title"
              value={banner.title}
              onChange={(e) => updateBanner(index, 'title', e.target.value)}
+             className="bg-background border-input placeholder:text-muted-foreground"
            />
            <Input
              placeholder="Image URL"
              value={banner.imageUrl}
              onChange={(e) => updateBanner(index, 'imageUrl', e.target.value)}
+             className="bg-background border-input placeholder:text-muted-foreground"
            />
            <Input
              placeholder="Click URL"
              value={banner.clickUrl}
              onChange={(e) => updateBanner(index, 'clickUrl', e.target.value)}
+             className="bg-background border-input placeholder:text-muted-foreground"
            />
          </div>
        </Card>
@@ -94,7 +100,7 @@ export function ReusableBannerForm({ component, onUpdate, isEditing }: ReusableB
      <Button
        type="button"
        variant="outline"
-       className="w-full"
+       className="w-full border-input hover:bg-accent hover:text-accent-foreground"
        onClick={addNewBanner}
      >
        <PlusCircle className="h-4 w-4 mr-2" />

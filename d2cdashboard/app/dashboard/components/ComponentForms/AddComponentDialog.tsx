@@ -95,34 +95,54 @@ export function AddComponentDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
-        <Button>Add Component</Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Add New Component</DialogTitle>
-        </DialogHeader>
-        <Select
-          value={newComponent.type}
-          onValueChange={(value: NewComponent['type']) =>
-            setNewComponent({
-              ...newComponent,
-              type: value,
-            })
-          }
-        >
-          <SelectTrigger className="mb-4">
-            <SelectValue placeholder="Select component type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="ReusableBanner">Reusable Banner</SelectItem>
-            <SelectItem value="BannerCard">Banner Card</SelectItem>
-            <SelectItem value="BrandCard">Brand Card</SelectItem>
-          </SelectContent>
-        </Select>
-        {renderForm()}
-        <Button onClick={handleAddComponent} className="mt-4">
+        <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
           Add Component
         </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto bg-background border border-border">
+        <DialogHeader>
+          <DialogTitle className="text-foreground">Add New Component</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <Select
+            value={newComponent.type}
+            onValueChange={(value: NewComponent['type']) =>
+              setNewComponent({
+                ...newComponent,
+                type: value,
+              })
+            }
+          >
+            <SelectTrigger className="bg-background border-input focus:ring-ring">
+              <SelectValue 
+                placeholder="Select component type" 
+                className="text-foreground"
+              />
+            </SelectTrigger>
+            <SelectContent className="bg-popover border-border">
+              <SelectItem value="ReusableBanner" className="text-foreground hover:bg-accent">
+                Reusable Banner
+              </SelectItem>
+              <SelectItem value="BannerCard" className="text-foreground hover:bg-accent">
+                Banner Card
+              </SelectItem>
+              <SelectItem value="BrandCard" className="text-foreground hover:bg-accent">
+                Brand Card
+              </SelectItem>
+            </SelectContent>
+          </Select>
+
+          <div className="bg-background rounded-md">
+            {renderForm()}
+          </div>
+
+          <Button 
+            onClick={handleAddComponent} 
+            className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+          >
+            Add Component
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );

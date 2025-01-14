@@ -66,21 +66,25 @@ export default function ComponentsPage() {
   };
 
   return (
-    <div className="container mx-auto py-8">
+    <div className="container mx-auto py-8 bg-background text-foreground min-h-screen">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Homepage Components</h1>
+        <h1 className="text-3xl font-bold text-foreground">
+          Homepage Components
+        </h1>
         <AddComponentDialog
           open={isAddDialogOpen}
           onOpenChange={setIsAddDialogOpen}
           onAdd={fetchComponents}
         />
       </div>
-      <ComponentList
-        components={components}
-        onDelete={handleDeleteComponent}
-        onReorder={handleDragEnd}
-        onEdit={fetchComponents}
-      />
+      <div className="rounded-lg border border-border bg-card p-6">
+        <ComponentList
+          components={components}
+          onDelete={handleDeleteComponent}
+          onReorder={handleDragEnd}
+          onEdit={fetchComponents}
+        />
+      </div>
     </div>
   );
 }

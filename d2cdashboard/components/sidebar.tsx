@@ -1,7 +1,5 @@
 "use client";
 
-// components/layout/sidebar.tsx
-
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -41,8 +39,8 @@ const SidebarLink = ({ href, icon, title, isCollapsed }: SidebarLinkProps) => {
       <Button
         variant="ghost"
         className={cn(
-          "w-full justify-start gap-4",
-          isActive && "bg-primary/10 text-primary",
+          "w-full justify-start gap-4 dark:hover:bg-gray-800",
+          isActive && "bg-primary/10 text-primary dark:bg-primary/20",
           isCollapsed && "justify-center px-2"
         )}
       >
@@ -99,14 +97,14 @@ export function Sidebar() {
       {/* Mobile Sidebar */}
       <Sheet>
         <SheetTrigger asChild>
-          <Button variant="ghost" size="icon" className="lg:hidden">
+          <Button variant="ghost" size="icon" className="lg:hidden dark:hover:bg-gray-800">
             <Menu className="h-6 w-6" />
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="w-72 p-0">
+        <SheetContent side="left" className="w-72 p-0 dark:bg-gray-900 dark:border-gray-800">
           <div className="flex h-full flex-col">
             <div className="p-6">
-              <h2 className="text-lg font-semibold">Shop Admin</h2>
+              <h2 className="text-lg font-semibold dark:text-white">Shop Admin</h2>
             </div>
             <nav className="flex-1 space-y-2 p-4">
               {navigationItems.map((item) => (
@@ -119,15 +117,15 @@ export function Sidebar() {
                 />
               ))}
             </nav>
-            <div className="border-t p-4">
+            <div className="border-t dark:border-gray-800 p-4">
               <div className="flex items-center gap-4">
                 <Avatar>
                   <AvatarImage src="/avatar.png" />
                   <AvatarFallback>AD</AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
-                  <p className="text-sm font-medium">Admin User</p>
-                  <p className="text-xs text-muted-foreground">admin@example.com</p>
+                  <p className="text-sm font-medium dark:text-white">Admin User</p>
+                  <p className="text-xs text-muted-foreground dark:text-gray-400">admin@example.com</p>
                 </div>
               </div>
             </div>
@@ -138,19 +136,19 @@ export function Sidebar() {
       {/* Desktop Sidebar */}
       <aside
         className={cn(
-          "hidden lg:flex h-screen flex-col border-r transition-all duration-300",
+          "hidden lg:flex h-screen flex-col border-r dark:bg-gray-900 dark:border-gray-800 transition-all duration-300",
           isCollapsed ? "w-20" : "w-72"
         )}
       >
         <div className={cn(
-          "flex h-16 items-center border-b px-6",
+          "flex h-16 items-center border-b dark:border-gray-800 px-6",
           isCollapsed && "justify-center px-4"
         )}>
-          {!isCollapsed && <h2 className="text-lg font-semibold">Shop Admin</h2>}
+          {!isCollapsed && <h2 className="text-lg font-semibold dark:text-white">Shop Admin</h2>}
           <Button
             variant="ghost"
             size="icon"
-            className={cn("ml-auto", !isCollapsed && "absolute right-4")}
+            className={cn("ml-auto dark:hover:bg-gray-800", !isCollapsed && "absolute right-4")}
             onClick={() => setIsCollapsed(!isCollapsed)}
           >
             <ChevronLeft className={cn(
@@ -172,7 +170,7 @@ export function Sidebar() {
           ))}
         </nav>
 
-        <div className="border-t p-4">
+        <div className="border-t dark:border-gray-800 p-4">
           <div className={cn(
             "flex items-center gap-4",
             isCollapsed && "justify-center"
@@ -183,8 +181,8 @@ export function Sidebar() {
             </Avatar>
             {!isCollapsed && (
               <div className="flex-1">
-                <p className="text-sm font-medium">Admin User</p>
-                <p className="text-xs text-muted-foreground">admin@example.com</p>
+                <p className="text-sm font-medium dark:text-white">Admin User</p>
+                <p className="text-xs text-muted-foreground dark:text-gray-400">admin@example.com</p>
               </div>
             )}
           </div>

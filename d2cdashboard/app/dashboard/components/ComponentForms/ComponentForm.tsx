@@ -1,4 +1,3 @@
-// app/ComponentForms/ComponentForm.tsx
 'use client';
 
 import { useState } from 'react';
@@ -68,18 +67,25 @@ export function ComponentForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+      <form 
+        onSubmit={form.handleSubmit(handleSubmit)} 
+        className="space-y-6 bg-background p-6 rounded-lg border border-border"
+      >
         <FormField
           control={form.control}
           name="title"
           rules={{ required: 'Title is required' }}
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Title</FormLabel>
+              <FormLabel className="text-foreground">Title</FormLabel>
               <FormControl>
-                <Input placeholder="Enter component title" {...field} />
+                <Input 
+                  placeholder="Enter component title" 
+                  {...field} 
+                  className="bg-background border-input placeholder:text-muted-foreground focus:ring-ring"
+                />
               </FormControl>
-              <FormMessage />
+              <FormMessage className="text-destructive" />
             </FormItem>
           )}
         />
@@ -90,35 +96,46 @@ export function ComponentForm({
           rules={{ required: 'Component type is required' }}
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Component Type</FormLabel>
+              <FormLabel className="text-foreground">Component Type</FormLabel>
               <Select
                 onValueChange={field.onChange}
                 defaultValue={field.value}
               >
                 <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a component type" />
+                  <SelectTrigger className="bg-background border-input focus:ring-ring">
+                    <SelectValue 
+                      placeholder="Select a component type" 
+                      className="text-foreground placeholder:text-muted-foreground"
+                    />
                   </SelectTrigger>
                 </FormControl>
-                <SelectContent>
+                <SelectContent className="bg-popover border-border">
                   {componentTypes.map((type) => (
-                    <SelectItem key={type} value={type}>
+                    <SelectItem 
+                      key={type} 
+                      value={type}
+                      className="text-foreground hover:bg-accent hover:text-accent-foreground"
+                    >
                       {type.charAt(0).toUpperCase() + type.slice(1)}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <FormMessage />
+              <FormMessage className="text-destructive" />
             </FormItem>
           )}
         />
 
         <Button 
           type="submit" 
-          className="w-full"
+          className="w-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
           disabled={loading}
         >
-          {loading ? 'Loading...' : submitLabel}
+          {loading ? (
+            <span className="text-primary-foreground opacity-70">Loading...</span>
+          ) : (
+            submitLabel
+          )}
         </Button>
       </form>
     </Form>
