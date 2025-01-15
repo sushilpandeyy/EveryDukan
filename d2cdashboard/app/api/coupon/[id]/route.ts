@@ -69,7 +69,7 @@ async function createCoupon(data: Coupon) {
 // PUT route handler
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: any
 ) {
   try {
     const id = params.id;

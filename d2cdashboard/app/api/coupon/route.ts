@@ -34,7 +34,7 @@ interface Coupon {
 }
 
 // Function to add a new coupon
-export async function addCoupon(data: Coupon) {
+async function addCoupon(data: Coupon) {
   await connectToDatabase();
   const db = mongoose.connection;
   const collection = db.collection('Coupons');
@@ -43,7 +43,7 @@ export async function addCoupon(data: Coupon) {
 }
 
 // Function to get all coupons
-export async function getCoupons() {
+async function getCoupons() {
   await connectToDatabase();
   const db = mongoose.connection;
   const collection = db.collection('Coupons');
