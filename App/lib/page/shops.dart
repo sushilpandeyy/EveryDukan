@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../component/storecard.dart';
-import '../component/categoryfilter.dart';
-import '../component/FamousBrands.dart';
+import 'package:shimmer/shimmer.dart';
 import '../component/header.dart';
 import '../component/bottom.dart';
-import '../component/sidebar.dart'; 
+import '../component/sidebar.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 // Models
@@ -51,6 +49,8 @@ class Category {
 }
 
 class ShopScreen extends StatefulWidget {
+  const ShopScreen({Key? key}) : super(key: key);
+
   @override
   _ShopScreenState createState() => _ShopScreenState();
 }
@@ -58,7 +58,8 @@ class ShopScreen extends StatefulWidget {
 class _ShopScreenState extends State<ShopScreen> {
   final List<Shop> _shops = [];
   final List<Category> _categories = [];
-  bool _isLoading = false;
+  bool _isLoading = true;
+  bool _isLoadingMore = false;
   bool _hasNextPage = true;
   final ScrollController _scrollController = ScrollController();
   int _currentPage = 1;
@@ -68,9 +69,16 @@ class _ShopScreenState extends State<ShopScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchCategories();
-    _loadMoreShops();
+    _initialize();
     _scrollController.addListener(_onScroll);
+  }
+
+  Future<void> _initialize() async {
+    await Future.wait([
+      _fetchCategories(),
+      _loadMoreShops(),
+    ]);
+    setState(() => _isLoading = false);
   }
 
   @override
@@ -82,7 +90,7 @@ class _ShopScreenState extends State<ShopScreen> {
   void _onScroll() {
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 200) {
-      if (_hasNextPage && !_isLoading) {
+      if (_hasNextPage && !_isLoadingMore) {
         _loadMoreShops();
       }
     }
@@ -99,7 +107,7 @@ class _ShopScreenState extends State<ShopScreen> {
         final categories = data['Category'] as List;
 
         setState(() {
-          _categories.add(Category(id: 'all', title: 'All')); // Add "All" category
+          _categories.add(Category(id: 'all', title: 'All'));
           _categories.addAll(
             categories.map((cat) => Category.fromJson(cat)).toList(),
           );
@@ -111,11 +119,9 @@ class _ShopScreenState extends State<ShopScreen> {
   }
 
   Future<void> _loadMoreShops() async {
-    if (_isLoading || !_hasNextPage) return;
+    if (_isLoadingMore || !_hasNextPage) return;
 
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() => _isLoadingMore = true);
 
     try {
       final response = await http.get(
@@ -127,110 +133,127 @@ class _ShopScreenState extends State<ShopScreen> {
         final shops = data['Shop'] as List;
         final pagination = data['pagination'];
 
-        final newShops = shops.map((shop) => Shop.fromJson(shop)).toList();
-
         setState(() {
-          _shops.addAll(newShops);
+          _shops.addAll(shops.map((shop) => Shop.fromJson(shop)));
           _currentPage++;
           _hasNextPage = pagination['hasNextPage'] ?? false;
-          _isLoading = false;
+          _isLoadingMore = false;
         });
       } else {
-        setState(() {
-          _isLoading = false;
-        });
+        setState(() => _isLoadingMore = false);
       }
     } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
+      setState(() => _isLoadingMore = false);
       debugPrint('Error fetching shops: $e');
     }
   }
 
   List<Shop> _getFilteredShops() {
-    if (_selectedCategory == 'All') {
-      return _shops;
-    }
+    if (_selectedCategory == 'All') return _shops;
     return _shops.where((shop) => 
       shop.category.contains(_selectedCategory)
     ).toList();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[50],
-      appBar: const Header(),
-      drawer: const SidebarDrawer(),
-      body: Column(
-        children: [
-          // Categories
-          Container(
-            height: 60,
-            margin: const EdgeInsets.symmetric(vertical: 8),
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: _categories.length,
-              itemBuilder: (context, index) {
-                final category = _categories[index];
-                final isSelected = category.title == _selectedCategory;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: FilterChip(
-                    selected: isSelected,
-                    label: Text(category.title),
-                    onSelected: (selected) {
-                      setState(() {
-                        _selectedCategory = category.title;
-                      });
-                    },
-                    selectedColor: Colors.amber,
-                    checkmarkColor: Colors.amber,
-                    backgroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                      side: BorderSide(
-                        color: isSelected ? Colors.amber : Colors.grey[300]!,
-                      ),
-                    ),
-                  ),
-                );
-              },
+  Widget _buildShimmerLoading() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: GridView.builder(
+        padding: const EdgeInsets.all(16),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          childAspectRatio: 1,
+          crossAxisSpacing: 16,
+          mainAxisSpacing: 16,
+        ),
+        itemCount: 6, // Show 6 shimmer items
+        itemBuilder: (_, __) => Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                height: 80,
+                width: 80,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                height: 16,
+                width: 100,
+                color: Colors.white,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCategoryShimmer() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: Container(
+        height: 60,
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        child: ListView.builder(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          itemCount: 5,
+          itemBuilder: (_, __) => Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: Container(
+              width: 80,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+              ),
             ),
           ),
-          // Shops Grid
-          Expanded(
-            child: _shops.isEmpty && _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : GridView.builder(
-                    controller: _scrollController,
-                    padding: const EdgeInsets.all(16),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      childAspectRatio: 1,
-                      crossAxisSpacing: 16,
-                      mainAxisSpacing: 16,
-                    ),
-                    itemCount: _getFilteredShops().length + (_hasNextPage ? 1 : 0),
-                    itemBuilder: (context, index) {
-                      if (index == _getFilteredShops().length) {
-                        return _isLoading
-                            ? const Center(child: CircularProgressIndicator())
-                            : const SizedBox.shrink();
-                      }
-
-                      final shop = _getFilteredShops()[index];
-                      return _buildShopCard(shop);
-                    },
-                  ),
-          ),
-        ],
+        ),
       ),
-      bottomNavigationBar: CustomBottomNavigation(
-        currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
+    );
+  }
+
+  Widget _buildCategories() {
+    return Container(
+      height: 60,
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: _categories.length,
+        itemBuilder: (context, index) {
+          final category = _categories[index];
+          final isSelected = category.title == _selectedCategory;
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: FilterChip(
+              selected: isSelected,
+              label: Text(category.title),
+              onSelected: (selected) {
+                setState(() => _selectedCategory = category.title);
+              },
+              selectedColor: Colors.amber,
+              checkmarkColor: Colors.amber,
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+                side: BorderSide(
+                  color: isSelected ? Colors.amber : Colors.grey[300]!,
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -254,7 +277,6 @@ class _ShopScreenState extends State<ShopScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Logo
             Container(
               height: 80,
               width: 80,
@@ -267,11 +289,10 @@ class _ShopScreenState extends State<ShopScreen> {
               child: Image.network(
                 shop.logo,
                 fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) =>
+                errorBuilder: (_, __, ___) =>
                     Icon(Icons.store, size: 40, color: Colors.grey[400]),
               ),
             ),
-            // Title
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8),
               child: Text(
@@ -301,56 +322,46 @@ class _ShopScreenState extends State<ShopScreen> {
       debugPrint('Error launching URL: $e');
     }
   }
-}
-
-// Update the CategoryFilter widget to handle the new data structure
-class CategoryFilter extends StatelessWidget {
-  final List<String> categories;
-  final String selectedCategory;
-  final Function(String) onCategorySelected;
-
-  const CategoryFilter({
-    Key? key,
-    required this.categories,
-    required this.selectedCategory,
-    required this.onCategorySelected,
-  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 50,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        itemCount: categories.length,
-        itemBuilder: (context, index) {
-          final category = categories[index];
-          final isSelected = category == selectedCategory;
-          
-          return Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: FilterChip(
-              label: Text(category),
-              selected: isSelected,
-              onSelected: (_) => onCategorySelected(category),
-              backgroundColor: Colors.grey[200],
-              selectedColor: Colors.amber.withOpacity(0.2),
-              labelStyle: TextStyle(
-                color: isSelected ? Colors.amber : Colors.black87,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              ),
-              checkmarkColor: Colors.amber,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-                side: BorderSide(
-                  color: isSelected ? Colors.amber : Colors.transparent,
-                  width: 1,
-                ),
-              ),
-            ),
-          );
-        },
+    return Scaffold(
+      backgroundColor: Colors.grey[50],
+      appBar: const Header(),
+      drawer: const SidebarDrawer(),
+      body: Column(
+        children: [
+          // Categories
+          _isLoading ? _buildCategoryShimmer() : _buildCategories(),
+          // Shops Grid
+          Expanded(
+            child: _isLoading
+                ? _buildShimmerLoading()
+                : GridView.builder(
+                    controller: _scrollController,
+                    padding: const EdgeInsets.all(16),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      childAspectRatio: 1,
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16,
+                    ),
+                    itemCount: _getFilteredShops().length + (_hasNextPage ? 1 : 0),
+                    itemBuilder: (context, index) {
+                      if (index == _getFilteredShops().length) {
+                        return _isLoadingMore
+                            ? const Center(child: CircularProgressIndicator())
+                            : const SizedBox.shrink();
+                      }
+                      return _buildShopCard(_getFilteredShops()[index]);
+                    },
+                  ),
+          ),
+        ],
+      ),
+      bottomNavigationBar: CustomBottomNavigation(
+        currentIndex: _currentIndex,
+        onTap: (index) => setState(() => _currentIndex = index),
       ),
     );
   }
