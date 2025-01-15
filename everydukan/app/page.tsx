@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { ShoppingBag, Smartphone, Bell, Tag, TrendingUp, Download, Sparkles, Shield, Store, ChevronLeft, ChevronRight, Check } from 'lucide-react';
+import { ShoppingBag, Smartphone, Bell, Tag, TrendingUp } from 'lucide-react';
 
 interface Statistic {
   value: number;
@@ -24,22 +24,13 @@ interface Feature {
 }
 
 const Home = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [activeSlide, setActiveSlide] = useState(0);
-  const [animatedStats, setAnimatedStats] = useState<Statistic[]>([
-    { value: 0, label: 'Active Users', suffix: 'K+' },
-    { value: 0, label: 'Brands', suffix: '+' },
-    { value: 0, label: 'Avg. Savings', suffix: '%' }
-  ]);
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [isMenuOpen, setIsMenuOpen] = useState(false);  
   
   const targetStats: Statistic[] = [
     { value: 500, label: 'Active Users', suffix: 'K+' },
     { value: 250, label: 'Brands', suffix: '+' },
     { value: 45, label: 'Avg. Savings', suffix: '%' }
-  ];
-
-  const categories = ['All', 'Fashion', 'Electronics', 'Beauty', 'Home'];
+  ]; 
   
   const deals: Deal[] = [
     {
@@ -89,13 +80,6 @@ const Home = () => {
           clearInterval(timer);
           return;
         }
-        
-        setAnimatedStats(prevStats =>
-          prevStats.map((stat, index) => ({
-            ...stat,
-            value: Math.round((targetStats[index].value / steps) * currentStep)
-          }))
-        );
         
         currentStep++;
       }, interval);
