@@ -449,6 +449,8 @@ export default function ShopManagement() {
                       <Image
                         src={shop.logo || "/placeholder.png"}
                         alt={`${shop.title} logo`}
+                        width={32}
+                        height={32}
                         className="h-8 w-8 object-contain"
                         onError={(e) => {
                           e.currentTarget.src = "/placeholder.png";

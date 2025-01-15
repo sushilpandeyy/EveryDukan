@@ -69,11 +69,10 @@ async function createCoupon(data: Coupon) {
 // PUT route handler
 export async function PUT(
   req: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const params = await context.params; // Await `params` as per Next.js API requirements
-    const id = params?.id;
+    const id = params.id;
 
     if (!id) {
       return NextResponse.json(

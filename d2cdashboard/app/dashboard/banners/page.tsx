@@ -135,6 +135,8 @@ export default function BannerManagement() {
                   src={banner.bannerImage}
                   alt={banner.title}
                   className="w-auto h-full mx-auto object-contain"
+                  width={400}
+                  height={200}
                 />
               </div>
               <div className="p-4">

@@ -334,6 +334,8 @@ export default function EnhancedCouponsPage() {
                               <Image
                                 src={coupon.merchantLogo} 
                                 alt={coupon.merchantName}
+                                width={32}
+                                height={32}
                                 className="w-8 h-8 object-contain rounded"
                                 onError={(e) => {
                                   const target = e.target as HTMLImageElement;

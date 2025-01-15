@@ -47,6 +47,8 @@ export function ComponentList({ components, onDelete, onReorder, onEdit }: Compo
                     src={banner.imageUrl}
                     alt={banner.title}
                     className="w-full h-full object-cover"
+                    width={400}
+                    height={200}
                   />
                   <div className="absolute bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm p-1">
                     <p className="text-foreground text-xs truncate">{banner.title}</p>
@@ -88,6 +90,8 @@ export function ComponentList({ components, onDelete, onReorder, onEdit }: Compo
                     src={brand.logoUrl}
                     alt={brand.title}
                     className="w-full h-full object-contain"
+                    width={100}
+                    height={100}
                   />
                   <div className="absolute bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm p-1">
                     <p className="text-foreground text-xs truncate">{brand.tag}</p>
@@ -125,6 +129,8 @@ export function ComponentList({ components, onDelete, onReorder, onEdit }: Compo
               src={component.imageUrl || '/default-image.png'}
               alt={component.title}
               className="w-full h-full object-cover"
+              width={400}
+              height={200}
             />
             {component.buttonText && (
               <div className="absolute bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm p-1">

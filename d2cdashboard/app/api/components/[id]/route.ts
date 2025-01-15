@@ -1,9 +1,8 @@
-// app/api/components/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/db';
 import mongoose from 'mongoose';
 
-// Define a dynamic schema that accepts any fields
+// Define the schema (you can move this to a separate models file)
 const DynamicSchema = new mongoose.Schema({
   order: {
     type: Number,
@@ -12,16 +11,17 @@ const DynamicSchema = new mongoose.Schema({
   }
 }, {
   timestamps: true,
-  strict: false // Allows any fields to be saved
+  strict: false
 });
 
-// Create or get the model
 const DynamicModel = mongoose.models.Component || 
   mongoose.model('Component', DynamicSchema);
 
+ 
+// The PUT method with a more specific params type
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: any } // Ensure the type is explicitly defined for params
 ) {
   try {
     await connectToDatabase();
@@ -60,9 +60,10 @@ export async function PUT(
   }
 }
 
+// The DELETE method with a more specific params type
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: any } // Ensure the type is explicitly defined for params
 ) {
   try {
     await connectToDatabase();
