@@ -184,8 +184,11 @@ export default function EnhancedCouponsPage() {
   };
 
   const filteredAndSortedCoupons = React.useMemo(() => {
-    let filtered = [...coupons];
-    
+    // Ensure `coupons` is always an array, even if undefined or null
+    const couponsArray = Array.isArray(coupons) ? coupons : [];
+  
+    let filtered = [...couponsArray];
+  
     // Apply search filter
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
@@ -195,20 +198,18 @@ export default function EnhancedCouponsPage() {
         coupon.couponCode.toLowerCase().includes(searchLower)
       );
     }
-
+  
     // Apply category filter
-    if (selectedCategory !== ALL_CATEGORIES) {
-      filtered = filtered.filter((coupon) => 
-        coupon.category === selectedCategory
-      );
+    if (selectedCategory && selectedCategory !== ALL_CATEGORIES) {
+      filtered = filtered.filter((coupon) => coupon.category === selectedCategory);
     }
-
+  
     // Apply sorting
-    if (sortConfig.key && sortConfig.direction) {
+    if (sortConfig?.key && sortConfig?.direction) {
       filtered.sort((a, b) => {
-        const aValue = sortConfig.key ? a[sortConfig.key] : '';
+        const aValue = sortConfig.key ? a[sortConfig.key] : ''; // Default to an empty string if the key is missing
         const bValue = sortConfig.key ? b[sortConfig.key] : '';
-        
+  
         if (aValue < bValue) {
           return sortConfig.direction === 'asc' ? -1 : 1;
         }
@@ -218,9 +219,10 @@ export default function EnhancedCouponsPage() {
         return 0;
       });
     }
-
+  
     return filtered;
   }, [coupons, searchTerm, selectedCategory, sortConfig]);
+  
 
   const daysUntilExpiration = (expirationDate: string): number => {
     const today = new Date();
