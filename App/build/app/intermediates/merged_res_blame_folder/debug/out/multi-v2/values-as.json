@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.deals.d2c.app-mergeDebugResources-59:/values-as/values-as.xml",
+            "outputFile": "com.deals.d2c.app-mergeDebugResources-60:/values-as/values-as.xml",
             "map": [
                 {
                     "source": "/Users/sushilpandey/.gradle/caches/transforms-3/ab921d2504dc4ffdb3a2cd4464883cfe/transformed/jetified-play-services-basement-18.4.0/res/values-as/values.xml",

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -10,6 +12,7 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+  
   // Initialize preference maps for each category
   Map<String, bool> fashionPrefs = {
     'male': false,
@@ -39,10 +42,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
     'male': false,
     'female': false,
   };
+ FirebaseAnalytics? analytics = FirebaseAnalytics.instance;
+
+ Future<void> initializeFirebase() async {
+    try {
+      await Firebase.initializeApp();
+      // analytics is already initialized as FirebaseAnalytics.instance
+      // Log home page open event
+      await analytics?.logEvent(
+        name: 'Setting_page_open',
+        parameters: {
+          'timestamp': DateTime.now().toIso8601String(),
+        },
+      );
+    } catch (e) {
+      debugPrint('Failed to initialize Firebase Analytics: $e');
+    }
+  } 
 
   @override
   void initState() {
     super.initState();
+    initializeFirebase();
     _fetchUserPreferences();
   }
 

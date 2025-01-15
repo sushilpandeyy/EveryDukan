@@ -7,7 +7,9 @@ import '../component/bottom.dart';
 import '../component/sidebar.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:url_launcher/url_launcher.dart';
-
+import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:firebase_core/firebase_core.dart';
+ 
 class CouponScreen extends StatefulWidget {
   @override
   _CouponScreenState createState() => _CouponScreenState();
@@ -20,13 +22,30 @@ class _CouponScreenState extends State<CouponScreen> {
   final ScrollController _scrollController = ScrollController();
   int _currentPage = 1;
   int _currentIndex = 3;
-    bool _isInitialLoading = true;
+  bool _isInitialLoading = true;
+  FirebaseAnalytics? analytics = FirebaseAnalytics.instance;
 
+Future<void> initializeFirebase() async {
+    try {
+      await Firebase.initializeApp();
+      // analytics is already initialized as FirebaseAnalytics.instance
+      // Log home page open event
+      await analytics?.logEvent(
+        name: 'Coupon_page_open',
+        parameters: {
+          'timestamp': DateTime.now().toIso8601String(),
+        },
+      );
+    } catch (e) {
+      debugPrint('Failed to initialize Firebase Analytics: $e');
+    }
+  } 
 
   @override
   void initState() {
     super.initState();
     _loadMoreCoupons();
+    initializeFirebase();
     _scrollController.addListener(_onScroll);
   }
 

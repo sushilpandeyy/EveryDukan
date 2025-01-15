@@ -7,7 +7,9 @@ import '../component/header.dart';
 import '../component/sidebar.dart';
 import 'package:shimmer/shimmer.dart';
 import '../component/bottom.dart';
-
+import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:firebase_core/firebase_core.dart';
+ 
 class DealsPage extends StatefulWidget {
   const DealsPage({super.key});
 
@@ -23,10 +25,28 @@ class _DealsPageState extends State<DealsPage> {
   final ScrollController _scrollController = ScrollController();
   int _currentPage = 1;
   bool _isInitialLoading = true;
+    FirebaseAnalytics? analytics = FirebaseAnalytics.instance;
+
+Future<void> initializeFirebase() async {
+    try {
+      await Firebase.initializeApp();
+      // analytics is already initialized as FirebaseAnalytics.instance
+      // Log home page open event
+      await analytics?.logEvent(
+        name: 'Deal_page_open',
+        parameters: {
+          'timestamp': DateTime.now().toIso8601String(),
+        },
+      );
+    } catch (e) {
+      debugPrint('Failed to initialize Firebase Analytics: $e');
+    }
+  } 
 
   @override
   void initState() {
     super.initState();
+    initializeFirebase();
     _loadMoreDeals();
     _scrollController.addListener(_onScroll);
   }

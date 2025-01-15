@@ -13,8 +13,9 @@ import './page/deals.dart';
 import './page/onboard.dart';
 
 void main() async {
-  await initializeApp();
-  runApp(const MyApp());
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  runApp(MyApp());
 }
 
 Future<void> initializeApp() async {
@@ -40,18 +41,10 @@ Future<void> _initializeFirebase() async {
   // You can add custom analytics initialization here if needed
 }
 
-Future<void> _initializeOneSignal() async {
-  // Initialize OneSignal
+Future<void> _initializeOneSignal() async { 
   OneSignal.Debug.setLogLevel(OSLogLevel.verbose);
-  OneSignal.initialize("a9a9e59d-c91d-487a-8121-0b231203406b");
-  
-  // Request notification permissions
-  await OneSignal.Notifications.requestPermission(true);
-  
-  // Set initial tags
-  await OneSignal.User.addTags({"fashionPrefsM": true});
-  
-  // Debug: print current tags
+  OneSignal.initialize("a9a9e59d-c91d-487a-8121-0b231203406b"); 
+  await OneSignal.Notifications.requestPermission(true);  
   final tags = await OneSignal.User.getTags();
   debugPrint('OneSignal tags: $tags');
 }
@@ -72,7 +65,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp( 
       debugShowCheckedModeBanner: false,
       title: 'Shopping App',
       theme: ThemeData(
@@ -119,15 +112,12 @@ class _AppEntryPointState extends State<AppEntryPoint> {
           _isLoading = false;
         });
       }
-
-      if (isFirstTime) {
-        await prefs.setBool('is_first_time', false);
-      }
     } catch (e) {
       debugPrint('Error checking first time status: $e');
       if (mounted) {
         setState(() {
           _isLoading = false;
+          _isFirstTime = true; // Default to showing onboarding if there's an error
         });
       }
     }
