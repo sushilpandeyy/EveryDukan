@@ -1,22 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { ShoppingBag, Smartphone, Bell, Tag, TrendingUp } from 'lucide-react';
-
-interface Statistic {
-  value: number;
-  label: string;
-  suffix: string;
-}
-
-interface Deal {
-  brandName: string;
-  discount: number;
-  originalPrice: number;
-  currentPrice: number;
-  category: string;
-  image: string;
-}
-
+ 
 interface Feature {
   title: string;
   description: string;
@@ -25,47 +10,8 @@ interface Feature {
 
 const Home = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);  
-  
-  const targetStats: Statistic[] = [
-    { value: 500, label: 'Active Users', suffix: 'K+' },
-    { value: 250, label: 'Brands', suffix: '+' },
-    { value: 45, label: 'Avg. Savings', suffix: '%' }
-  ]; 
-  
-  const deals: Deal[] = [
-    {
-      brandName: 'FashionBrand',
-      discount: 40,
-      originalPrice: 2999,
-      currentPrice: 1799,
-      category: 'Fashion',
-      image: '/api/placeholder/200/200'
-    },
-    {
-      brandName: 'TechGear',
-      discount: 30,
-      originalPrice: 15999,
-      currentPrice: 11199,
-      category: 'Electronics',
-      image: '/api/placeholder/200/200'
-    },
-    {
-      brandName: 'BeautyEssentials',
-      discount: 25,
-      originalPrice: 1299,
-      currentPrice: 974,
-      category: 'Beauty',
-      image: '/api/placeholder/200/200'
-    },
-    {
-      brandName: 'HomeDécor',
-      discount: 35,
-      originalPrice: 4999,
-      currentPrice: 3249,
-      category: 'Home',
-      image: '/api/placeholder/200/200'
-    }
-  ];
+   
+   
 
   useEffect(() => {
     const animateStats = () => {
