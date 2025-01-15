@@ -104,7 +104,7 @@ export function Sidebar() {
         <SheetContent side="left" className="w-72 p-0 dark:bg-gray-900 dark:border-gray-800">
           <div className="flex h-full flex-col">
             <div className="p-6">
-              <h2 className="text-lg font-semibold dark:text-white">Shop Admin</h2>
+              <h2 className="text-lg font-semibold dark:text-white">EveryDukan</h2>
             </div>
             <nav className="flex-1 space-y-2 p-4">
               {navigationItems.map((item) => (
@@ -144,7 +144,7 @@ export function Sidebar() {
           "flex h-16 items-center border-b dark:border-gray-800 px-6",
           isCollapsed && "justify-center px-4"
         )}>
-          {!isCollapsed && <h2 className="text-lg font-semibold dark:text-white">Shop Admin</h2>}
+          {!isCollapsed && <h2 className="text-lg font-semibold dark:text-white">EveryDukan</h2>}
           <Button
             variant="ghost"
             size="icon"
