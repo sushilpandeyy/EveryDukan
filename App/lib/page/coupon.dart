@@ -5,6 +5,8 @@ import 'package:http/http.dart' as http;
 import '../component/header.dart';
 import '../component/bottom.dart';
 import '../component/sidebar.dart';
+import 'package:shimmer/shimmer.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class CouponScreen extends StatefulWidget {
   @override
@@ -18,6 +20,8 @@ class _CouponScreenState extends State<CouponScreen> {
   final ScrollController _scrollController = ScrollController();
   int _currentPage = 1;
   int _currentIndex = 3;
+    bool _isInitialLoading = true;
+
 
   @override
   void initState() {
@@ -50,7 +54,7 @@ class _CouponScreenState extends State<CouponScreen> {
     return Colors.amber; // Default color
   }
 
-  Future<void> _loadMoreCoupons() async {
+   Future<void> _loadMoreCoupons() async {
     if (_isLoading || !_hasNextPage) return;
 
     setState(() {
@@ -78,6 +82,7 @@ class _CouponScreenState extends State<CouponScreen> {
           category: coupon['category'],
           backgroundColor: _parseColor(coupon['backgroundColor']),
           accentColor: _parseColor(coupon['accentColor']),
+          clickurl: coupon['clickurl'],
           terms: List<String>.from(coupon['terms']),
         )).toList();
 
@@ -86,16 +91,19 @@ class _CouponScreenState extends State<CouponScreen> {
           _currentPage++;
           _hasNextPage = pagination['hasNextPage'];
           _isLoading = false;
+          _isInitialLoading = false;
         });
       } else {
         setState(() {
           _isLoading = false;
+          _isInitialLoading = false;
         });
         throw Exception('Failed to load coupons');
       }
     } catch (e) {
       setState(() {
         _isLoading = false;
+        _isInitialLoading = false;
       });
       debugPrint('Error fetching coupons: $e');
     }
@@ -107,44 +115,9 @@ class _CouponScreenState extends State<CouponScreen> {
       appBar: const Header(),
       drawer: const SidebarDrawer(),
       body: SafeArea(
-        child: _coupons.isEmpty && _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : CustomScrollView(
-                controller: _scrollController,
-                slivers: [
-                  SliverPadding(
-                    padding: EdgeInsets.all(16),
-                    sliver: SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                          if (index == _coupons.length) {
-                            return _hasNextPage
-                                ? const Padding(
-                                    padding: EdgeInsets.all(16.0),
-                                    child: Center(child: CircularProgressIndicator()),
-                                  )
-                                : _coupons.isNotEmpty
-                                    ? Padding(
-                                        padding: const EdgeInsets.all(16.0),
-                                        child: Text(
-                                          'No more coupons available',
-                                          textAlign: TextAlign.center,
-                                          style: TextStyle(color: Colors.grey[600]),
-                                        ),
-                                      )
-                                    : const SizedBox.shrink();
-                          }
-                          return Padding(
-                            padding: EdgeInsets.only(bottom: 16),
-                            child: TicketCouponCard(coupon: _coupons[index]),
-                          );
-                        },
-                        childCount: _coupons.length + 1,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+        child: _isInitialLoading 
+            ? _buildSkeletonLoading()
+            : _buildCouponList(),
       ),
       bottomNavigationBar: CustomBottomNavigation(
         currentIndex: _currentIndex,
@@ -152,7 +125,60 @@ class _CouponScreenState extends State<CouponScreen> {
       ),
     );
   }
+
+    Widget _buildSkeletonLoading() {
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: 5,
+      itemBuilder: (context, index) {
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: _CouponCardSkeleton(),
+        );
+      },
+    );
+  }
+
+  Widget _buildCouponList() {
+    return CustomScrollView(
+      controller: _scrollController,
+      slivers: [
+        SliverPadding(
+          padding: const EdgeInsets.all(16),
+          sliver: SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                if (index == _coupons.length) {
+                  return _hasNextPage
+                      ? const Padding(
+                          padding: EdgeInsets.all(16.0),
+                          child: Center(child: CircularProgressIndicator()),
+                        )
+                      : _coupons.isNotEmpty
+                          ? Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Text(
+                                'No more coupons available',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(color: Colors.grey[600]),
+                              ),
+                            )
+                          : const SizedBox.shrink();
+                }
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: TicketCouponCard(coupon: _coupons[index]),
+                );
+              },
+              childCount: _coupons.length + 1,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 }
+
 
 class TicketCouponCard extends StatelessWidget {
   final Coupon coupon;
@@ -702,47 +728,101 @@ class CouponDetailsSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildBottomCTA(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: Offset(0, -5),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        child: ElevatedButton(
-          onPressed: () => _copyCouponCode(context),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.copy),
-              SizedBox(width: 8),
-              Text(
-                'Copy Code & Shop Now',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
+ Widget _buildBottomCTA(BuildContext context) {
+  Future<void> _copyCodeAndOpenUrl() async {
+    try {
+      // First copy the code
+      _copyCouponCode(context);
+      
+      if (coupon.clickurl != null && coupon.clickurl!.isNotEmpty) {
+        final url = Uri.parse(coupon.clickurl!);
+        
+        if (await canLaunchUrl(url)) {
+          await launchUrl(
+            url,
+            mode: LaunchMode.externalApplication,
+          );
+        } else {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: const [
+                    Icon(Icons.error_outline, color: Colors.white),
+                    SizedBox(width: 8),
+                    Text('Could not open store website'),
+                  ],
                 ),
+                behavior: SnackBarBehavior.floating,
+                backgroundColor: Colors.red,
               ),
-            ],
-          ),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: coupon.accentColor,
-            padding: EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+            );
+          }
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: const [
+                Icon(Icons.error_outline, color: Colors.white),
+                SizedBox(width: 8),
+                Text('Error opening store website'),
+              ],
             ),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  return Container(
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.1),
+          blurRadius: 10,
+          offset: const Offset(0, -5),
+        ),
+      ],
+    ),
+    child: SafeArea(
+      child: ElevatedButton(
+        onPressed: _copyCodeAndOpenUrl,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: coupon.accentColor,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
           ),
         ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.local_offer_outlined),
+            const SizedBox(width: 12),
+            const Text(
+              'Copy & Shop Now',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.5,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Icon(Icons.arrow_forward_rounded),
+          ],
+        ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   // Helper Widgets
   Widget _buildSectionTitle(String title) {
@@ -858,7 +938,155 @@ class CouponDetailsSheet extends StatelessWidget {
   }
 }
 
-// Update the Coupon class with new fields
+class _CouponCardSkeleton extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          children: [
+            _buildUpperSection(),
+            _buildDashedDivider(),
+            _buildLowerSection(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUpperSection() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 120,
+                      height: 16,
+                      color: Colors.white,
+                    ),
+                    const SizedBox(height: 4),
+                    Container(
+                      width: 80,
+                      height: 14,
+                      color: Colors.white,
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                width: 60,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Container(
+            width: double.infinity,
+            height: 20,
+            color: Colors.white,
+          ),
+          const SizedBox(height: 8),
+          Container(
+            width: double.infinity,
+            height: 14,
+            color: Colors.white,
+          ),
+          const SizedBox(height: 4),
+          Container(
+            width: 200,
+            height: 14,
+            color: Colors.white,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDashedDivider() {
+    return Container(
+      height: 1,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return Flex(
+            direction: Axis.horizontal,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: List.generate(
+              (constraints.constrainWidth() / 10).floor(),
+              (index) => Container(
+                width: 5,
+                height: 1,
+                color: Colors.white,
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildLowerSection() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 60,
+                height: 12,
+                color: Colors.white,
+              ),
+              const SizedBox(height: 4),
+              Container(
+                width: 80,
+                height: 14,
+                color: Colors.white,
+              ),
+            ],
+          ),
+          Container(
+            width: 120,
+            height: 40,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+ 
+ 
 class Coupon {
   final String title;
   final String merchantName;
@@ -870,6 +1098,7 @@ class Coupon {
   final String category;
   final Color backgroundColor;
   final Color accentColor;
+  final String? clickurl;
   final double? minimumPurchase;
   final double? maxDiscount;
   final List<String> terms;
@@ -884,6 +1113,7 @@ class Coupon {
     required this.expirationDate,
     required this.discount,
     required this.category,
+    required this.clickurl,
     this.backgroundColor = const Color(0xFFF5F5F5),
     this.accentColor = const Color(0xFF2196F3),
     this.minimumPurchase,

@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../component/header.dart';
 import '../component/sidebar.dart';
+import 'package:shimmer/shimmer.dart';
 import '../component/bottom.dart';
 
 class DealsPage extends StatefulWidget {
@@ -21,6 +22,7 @@ class _DealsPageState extends State<DealsPage> {
   bool _hasNextPage = true;
   final ScrollController _scrollController = ScrollController();
   int _currentPage = 1;
+  bool _isInitialLoading = true;
 
   @override
   void initState() {
@@ -75,73 +77,204 @@ class _DealsPageState extends State<DealsPage> {
           _currentPage++;
           _hasNextPage = pagination['hasNextPage'];
           _isLoading = false;
+          _isInitialLoading = false;
         });
       } else {
         setState(() {
           _isLoading = false;
+          _isInitialLoading = false;
         });
         throw Exception('Failed to load deals');
       }
     } catch (e) {
       setState(() {
         _isLoading = false;
+        _isInitialLoading = false;
       });
       debugPrint('Error fetching deals: $e');
     }
   }
 
-  void _onTabTapped(int index) {
+   void _onTabTapped(int index) {
     setState(() {
       _currentIndex = index;
     });
   }
+  
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: const Header(),
       drawer: const SidebarDrawer(),
-      body: Column(
-        children: [
-          Expanded(
-            child: GridView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.all(12),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                childAspectRatio: 0.65,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-              ),
-              itemCount: _deals.length + (_hasNextPage ? 1 : 0),
-              itemBuilder: (context, index) {
-                if (index == _deals.length) {
-                  return _isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : const SizedBox.shrink();
-                }
-                return _buildDealCard(_deals[index]);
-              },
+      body: _isInitialLoading 
+          ? _buildSkeletonLoading()
+          : Column(
+              children: [
+                Expanded(
+                  child: GridView.builder(
+                    controller: _scrollController,
+                    padding: const EdgeInsets.all(12),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      childAspectRatio: 0.65,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                    ),
+                    itemCount: _deals.length + (_hasNextPage ? 1 : 0),
+                    itemBuilder: (context, index) {
+                      if (index == _deals.length) {
+                        return _isLoading
+                            ? const Center(child: CircularProgressIndicator())
+                            : const SizedBox.shrink();
+                      }
+                      return _buildDealCard(_deals[index]);
+                    },
+                  ),
+                ),
+                if (!_hasNextPage && _deals.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Text(
+                      'No more deals available',
+                      style: TextStyle(color: Colors.grey[600]),
+                    ),
+                  ),
+              ],
             ),
-          ),
-          if (_isLoading && _deals.isEmpty)
-            const Center(child: CircularProgressIndicator()),
-          if (!_hasNextPage && _deals.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Text(
-                'No more deals available',
-                style: TextStyle(color: Colors.grey[600]),
-              ),
-            ),
-        ],
-      ),
       bottomNavigationBar: CustomBottomNavigation(
         currentIndex: _currentIndex,
         onTap: _onTabTapped,
       ),
     );
   }
+
+   Widget _buildSkeletonLoading() {
+    return GridView.builder(
+      padding: const EdgeInsets.all(12),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        childAspectRatio: 0.65,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+      ),
+      itemCount: 6, // Show 6 skeleton items
+      itemBuilder: (context, index) => _DealCardSkeleton(),
+    );
+  }
+}
+
+class _DealCardSkeleton extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.15),
+              spreadRadius: 2,
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Image placeholder
+            Container(
+              height: 140,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(
+                  top: Radius.circular(16),
+                ),
+              ),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Title placeholder
+                    Container(
+                      height: 16,
+                      width: double.infinity,
+                      color: Colors.white,
+                    ),
+                    const SizedBox(height: 8),
+                    // Subtitle placeholder
+                    Container(
+                      height: 12,
+                      width: double.infinity,
+                      color: Colors.white,
+                    ),
+                    const SizedBox(height: 4),
+                    Container(
+                      height: 12,
+                      width: 150,
+                      color: Colors.white,
+                    ),
+                    const Spacer(),
+                    // Price placeholders
+                    Row(
+                      children: [
+                        Container(
+                          height: 18,
+                          width: 60,
+                          color: Colors.white,
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          height: 14,
+                          width: 40,
+                          color: Colors.white,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    // Button placeholders
+                    Row(
+                      children: [
+                        Expanded(
+                          flex: 4,
+                          child: Container(
+                            height: 35,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          flex: 1,
+                          child: Container(
+                            height: 35,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
    Widget _buildDealCard(DealCard deal) {
     return Container(
@@ -349,7 +482,7 @@ class _DealsPageState extends State<DealsPage> {
     final shareText = '${deal.title}\n${deal.subtitle}\nShop now: ${deal.shopUrl}';
     await Share.share(shareText);
   }
-}
+
 
 class DealCard {
   final String imageUrl;
