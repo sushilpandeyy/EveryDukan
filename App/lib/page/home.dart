@@ -10,6 +10,7 @@ import '../util/linkopener.dart';
 import '../component/FamousBrands.dart';
 import '../component/ReusableBanner.dart';
 import '../component/sidebar.dart';
+import '../component/skelton.dart'; // Import the skeleton loading component
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -22,6 +23,7 @@ class _HomePageState extends State<HomePage> {
   int _currentIndex = 0;
   List<dynamic> _components = [];
   bool _isLoading = true;
+  bool _isError = false;
 
   @override
   void initState() {
@@ -37,18 +39,24 @@ class _HomePageState extends State<HomePage> {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        setState(() {
-          _components = data['components'];
-          _isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            _components = data['components'];
+            _isLoading = false;
+            _isError = false;
+          });
+        }
       } else {
         throw Exception('Failed to load home data');
       }
     } catch (e) {
-      print('Error fetching home data: $e');
-      setState(() {
-        _isLoading = false;
-      });
+      debugPrint('Error fetching home data: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _isError = true;
+        });
+      }
     }
   }
 
@@ -58,7 +66,7 @@ class _HomePageState extends State<HomePage> {
         return ReusableBannerComponent(
           title: component['title'],
           onViewAll: () {
-            print('View All clicked');
+            debugPrint('View All clicked');
           },
           banners: (component['banners'] as List).map((banner) => 
             BannerCardModel(
@@ -94,34 +102,74 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Widget _buildErrorWidget() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.error_outline,
+            size: 60,
+            color: Colors.grey[600],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Oops! Something went wrong',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey[800],
+            ),
+          ),
+          const SizedBox(height: 8),
+          TextButton(
+            onPressed: () {
+              setState(() {
+                _isLoading = true;
+                _isError = false;
+              });
+              fetchHomeData();
+            },
+            child: const Text('Try Again'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: const Header(),
       drawer: const SidebarDrawer(),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(10.0),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Slideshow(),
-                      const SizedBox(height: 20),
-                      ..._components.map((component) => Column(
-                        children: [
-                          _buildComponent(component),
-                          const SizedBox(height: 20),
-                        ],
-                      )).toList(),
-                    ],
+      body: RefreshIndicator(
+        onRefresh: fetchHomeData,
+        child: _isLoading
+            ? const HomeSkeletonLoading()
+            : _isError
+                ? _buildErrorWidget()
+                : SingleChildScrollView(
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(10.0),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Slideshow(),
+                            const SizedBox(height: 20),
+                            ..._components.map((component) => Column(
+                              children: [
+                                _buildComponent(component),
+                                const SizedBox(height: 20),
+                              ],
+                            )).toList(),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            ),
+      ),
       bottomNavigationBar: CustomBottomNavigation(
         currentIndex: _currentIndex,
         onTap: (index) {
