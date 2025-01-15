@@ -1,16 +1,28 @@
 // Import required modules
 import { NextResponse, NextRequest } from 'next/server';
-import mongoose, { Schema, model, models, Model, Document } from 'mongoose';
+import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 
-// Load environment variables from .env file
 dotenv.config();
 
-// MongoDB schema for Coupons
-interface ICoupon extends Document {
+// MongoDB connection utility
+async function connectToDatabase() {
+  if (!mongoose.connection.readyState) {
+    const mongoUri = process.env.MONGO_URI;
+    if (!mongoUri) {
+      throw new Error('MONGO_URI is not defined in the environment variables');
+    }
+    await mongoose.connect(mongoUri);
+  }
+}
+
+// Define the Coupon interface
+interface Coupon {
+  id: string;
   title: string;
   merchantName: string;
   merchantLogo: string;
+  clickurl: string;
   couponCode: string;
   description: string;
   expirationDate: string;
@@ -21,92 +33,40 @@ interface ICoupon extends Document {
   terms: string[];
 }
 
-const couponSchema = new Schema(
-  {
-    title: { type: String, required: true },
-    merchantName: { type: String, required: true },
-    merchantLogo: { type: String, required: true },
-    couponCode: { type: String, required: true },
-    description: { type: String},
-    expirationDate: { type: String, required: true },
-    discount: { type: String, required: true },
-    category: { type: String },
-    backgroundColor: { type: String, required: true },
-    accentColor: { type: String, required: true },
-    terms: { type: [String] },
-  },
-  { collection: 'Coupons' }
-);
+// Function to add a new coupon
+export async function addCoupon(data: Coupon) {
+  await connectToDatabase();
+  const db = mongoose.connection;
+  const collection = db.collection('Coupons');
+  const result = await collection.insertOne(data);
+  return result;
+}
 
-// Ensure we don't redefine the model in development
-const Coupon: Model<ICoupon> = models.Coupon || model('Coupon', couponSchema);
+// Function to get all coupons
+export async function getCoupons() {
+  await connectToDatabase();
+  const db = mongoose.connection;
+  const collection = db.collection('Coupons');
+  const coupons = await collection.find({}).toArray();
+  return coupons;
+}
 
-// MongoDB connection function
-let isConnected = false;
-
-const connectToDatabase = async () => {
-  if (isConnected) return;
-
+// Handle API routes
+export async function POST(req: NextRequest) {
   try {
-    await mongoose.connect(process.env.MONGO_URI || '');
-    isConnected = true;
-    console.log('Connected to MongoDB');
+    const data = await req.json();
+    const result = await addCoupon(data);
+    return NextResponse.json({ success: true, id: result.insertedId });
   } catch (error) {
-    console.error('MongoDB connection error:', error);
-    throw new Error('Could not connect to the database');
-  }
-};
-
-// GET all coupons
-export async function GET(request: NextRequest) {
-  try {
-    await connectToDatabase();
-    const coupons = await Coupon.find({});
-    return NextResponse.json(coupons);
-  } catch (error) {
-    return NextResponse.error();
+    return NextResponse.json({ success: false, error: (error as Error).message });
   }
 }
 
-
-// POST a new coupon
-export async function POST(request: NextRequest) {
+export async function GET() {
   try {
-    await connectToDatabase();
-    const body = await request.json();
-    const coupon = new Coupon(body);
-    const savedCoupon = await coupon.save();
-    return NextResponse.json(savedCoupon, { status: 201 });
+    const coupons = await getCoupons();
+    return NextResponse.json({ success: true, coupons });
   } catch (error) {
-    return NextResponse.error();
-  }
-}
-
-// PUT (update) a coupon by ID
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
-  try {
-    await connectToDatabase();
-    const body = await request.json();
-    const updatedCoupon = await Coupon.findByIdAndUpdate(params.id, body, { new: true });
-    if (!updatedCoupon) {
-      return NextResponse.json({ message: 'Coupon not found' }, { status: 404 });
-    }
-    return NextResponse.json(updatedCoupon);
-  } catch (error) {
-    return NextResponse.error();
-  }
-}
-
-// DELETE a coupon by ID
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
-  try {
-    await connectToDatabase();
-    const deletedCoupon = await Coupon.findByIdAndDelete(params.id);
-    if (!deletedCoupon) {
-      return NextResponse.json({ message: 'Coupon not found' }, { status: 404 });
-    }
-    return NextResponse.json(deletedCoupon);
-  } catch (error) {
-    return NextResponse.error();
+    return NextResponse.json({ success: false, error: (error as Error).message });
   }
 }

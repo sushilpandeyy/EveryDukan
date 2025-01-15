@@ -37,6 +37,7 @@ interface CouponFormModalProps {
     title: string;
     merchantName: string;
     merchantLogo: string;
+    clickurl: string;  // Added this line
     couponCode: string;
     description: string;
     expirationDate: string;
@@ -70,6 +71,7 @@ export default function CouponFormModal({
       title: coupon?.title || "",
       merchantName: coupon?.merchantName || "",
       merchantLogo: coupon?.merchantLogo || "",
+      clickurl: coupon?.clickurl || "", 
       couponCode: coupon?.couponCode || "",
       description: coupon?.description || "",
       expirationDate: coupon?.expirationDate || "",
@@ -113,84 +115,105 @@ export default function CouponFormModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="mb-4">
           <DialogTitle>{coupon ? "Edit Coupon" : "Add New Coupon"}</DialogTitle>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute right-4 top-4"
-            onClick={onClose}
-          >
-            <X className="h-4 w-4" />
-          </Button>
+          
         </DialogHeader>
 
         <FormProvider {...formMethods}>
-          <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
-            <div className="grid grid-cols-2 gap-4">
-              <FormItem>
-                <FormLabel>Title</FormLabel>
-                <FormControl>
-                  <Input {...formMethods.register("title", { required: true })} />
-                </FormControl>
-                <FormMessage>{errors.title && "Title is required"}</FormMessage>
-              </FormItem>
+          <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-4">
+                <FormItem>
+                  <FormLabel>Title</FormLabel>
+                  <FormControl>
+                    <Input {...formMethods.register("title", { required: true })} />
+                  </FormControl>
+                  <FormMessage>{errors.title && "Title is required"}</FormMessage>
+                </FormItem>
 
-              <FormItem>
-                <FormLabel>Merchant Name</FormLabel>
-                <FormControl>
-                  <Input {...formMethods.register("merchantName", { required: true })} />
-                </FormControl>
-                <FormMessage>{errors.merchantName && "Merchant name is required"}</FormMessage>
-              </FormItem>
+                <FormItem>
+                  <FormLabel>Merchant Name</FormLabel>
+                  <FormControl>
+                    <Input {...formMethods.register("merchantName", { required: true })} />
+                  </FormControl>
+                  <FormMessage>{errors.merchantName && "Merchant name is required"}</FormMessage>
+                </FormItem>
 
-              <FormItem>
-                <FormLabel>Merchant Logo URL</FormLabel>
-                <FormControl>
-                  <Input {...formMethods.register("merchantLogo", { required: true })} />
-                </FormControl>
-                <FormMessage>{errors.merchantLogo && "Merchant logo is required"}</FormMessage>
-              </FormItem>
+                <FormItem>
+                  <FormLabel>Merchant Logo URL</FormLabel>
+                  <FormControl>
+                    <Input {...formMethods.register("merchantLogo", { required: true })} />
+                  </FormControl>
+                  <FormMessage>{errors.merchantLogo && "Merchant logo is required"}</FormMessage>
+                </FormItem>
 
-              <FormItem>
-                <FormLabel>Coupon Code</FormLabel>
-                <FormControl>
-                  <Input {...formMethods.register("couponCode", { required: true })} />
-                </FormControl>
-                <FormMessage>{errors.couponCode && "Coupon code is required"}</FormMessage>
-              </FormItem>
+                <FormItem>
+                  <FormLabel>Click URL</FormLabel>
+                  <FormControl>
+                    <Input {...formMethods.register("clickurl", { required: true })} />
+                  </FormControl>
+                  <FormMessage>{errors.clickurl && "Click URL is required"}</FormMessage>
+                </FormItem>
+              </div>
 
-              <FormItem>
-                <FormLabel>Discount</FormLabel>
-                <FormControl>
-                  <Input {...formMethods.register("discount", { required: true })} />
-                </FormControl>
-                <FormMessage>{errors.discount && "Discount is required"}</FormMessage>
-              </FormItem>
+              <div className="space-y-4">
+                <FormItem>
+                  <FormLabel>Coupon Code</FormLabel>
+                  <FormControl>
+                    <Input {...formMethods.register("couponCode", { required: true })} />
+                  </FormControl>
+                  <FormMessage>{errors.couponCode && "Coupon code is required"}</FormMessage>
+                </FormItem>
 
-              <FormItem>
-                <FormLabel>Category</FormLabel>
-                <Select {...formMethods.register("category")}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {CATEGORIES.map((category) => (
-                      <SelectItem key={category} value={category}>
-                        {category}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormItem>
+                <FormItem>
+                  <FormLabel>Discount</FormLabel>
+                  <FormControl>
+                    <Input {...formMethods.register("discount", { required: true })} />
+                  </FormControl>
+                  <FormMessage>{errors.discount && "Discount is required"}</FormMessage>
+                </FormItem>
 
+                <FormItem>
+                  <FormLabel>Category</FormLabel>
+                  <Select {...formMethods.register("category")}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CATEGORIES.map((category) => (
+                        <SelectItem key={category} value={category}>
+                          {category}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormItem>
+
+                <FormItem>
+                  <FormLabel>Expiration Date</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...formMethods.register("expirationDate", { required: true })}
+                      type="date"
+                    />
+                  </FormControl>
+                  <FormMessage>
+                    {errors.expirationDate && "Expiration date is required"}
+                  </FormMessage>
+                </FormItem>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormItem>
                 <FormLabel>Background Color</FormLabel>
                 <FormControl>
                   <Input
                     {...formMethods.register("backgroundColor", { required: true })}
                     type="color"
+                    className="h-10"
                   />
                 </FormControl>
               </FormItem>
@@ -201,46 +224,38 @@ export default function CouponFormModal({
                   <Input
                     {...formMethods.register("accentColor", { required: true })}
                     type="color"
+                    className="h-10"
                   />
                 </FormControl>
               </FormItem>
+            </div>
 
-              <FormItem className="col-span-2">
+            <div className="space-y-4">
+              <FormItem>
                 <FormLabel>Description</FormLabel>
                 <FormControl>
                   <Textarea
                     {...formMethods.register("description", { required: true })}
+                    className="h-20"
                   />
                 </FormControl>
                 <FormMessage>{errors.description && "Description is required"}</FormMessage>
               </FormItem>
 
-              <FormItem className="col-span-2">
+              <FormItem>
                 <FormLabel>Terms & Conditions</FormLabel>
                 <FormControl>
                   <Textarea
                     {...formMethods.register("terms", { required: true })}
                     placeholder="Enter terms, one per line"
+                    className="h-20"
                   />
                 </FormControl>
                 <FormMessage>{errors.terms && "Terms are required"}</FormMessage>
               </FormItem>
-
-              <FormItem>
-                <FormLabel>Expiration Date</FormLabel>
-                <FormControl>
-                  <Input
-                    {...formMethods.register("expirationDate", { required: true })}
-                    type="date"
-                  />
-                </FormControl>
-                <FormMessage>
-                  {errors.expirationDate && "Expiration date is required"}
-                </FormMessage>
-              </FormItem>
             </div>
 
-            <div className="flex justify-end space-x-4">
+            <div className="flex justify-end space-x-4 pt-4">
               <Button type="button" variant="outline" onClick={onClose}>
                 Cancel
               </Button>

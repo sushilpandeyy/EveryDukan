@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import Image from 'next/image';
-import { Plus, Pencil, Trash2, Search } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Copy, ExternalLink } from 'lucide-react';
+import CouponFormModal from './coupon-form-modal';
 import {
   Card,
   CardContent,
@@ -20,13 +20,21 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import CouponFormModal from './coupon-form-modal';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
+// Interfaces
 interface Coupon {
-  id: string;
+  _id: string;
   title: string;
   merchantName: string;
   merchantLogo: string;
+  clickurl: string;
   couponCode: string;
   description: string;
   expirationDate: string;
@@ -37,13 +45,42 @@ interface Coupon {
   terms: string[];
 }
 
-export default function CouponsPage() {
+interface SortConfig {
+  key: keyof Coupon | '';
+  direction: 'asc' | 'desc' | '';
+}
+
+// Constants
+const CATEGORIES = [
+  "Food & Dining",
+  "Shopping",
+  "Travel",
+  "Entertainment",
+  "Electronics",
+  "Fashion",
+  "Health & Beauty",
+  "Other"
+] as const;
+
+const ALL_CATEGORIES = "all" as const;
+type CategoryType = typeof CATEGORIES[number];
+type CategoryFilter = CategoryType | typeof ALL_CATEGORIES;
+
+export default function EnhancedCouponsPage() {
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCoupon, setSelectedCoupon] = useState<Coupon | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>(ALL_CATEGORIES);
+  const [sortConfig, setSortConfig] = useState<SortConfig>({ key: '', direction: '' });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [copySuccess, setCopySuccess] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+const [selectedCoupon, setSelectedCoupon] = useState<Coupon | null>(null);
+
+
+  useEffect(() => {
+    fetchCoupons();
+  }, []);
 
   const fetchCoupons = async () => {
     try {
@@ -51,97 +88,111 @@ export default function CouponsPage() {
       const response = await fetch('/api/coupon');
       if (!response.ok) throw new Error('Failed to fetch coupons');
       const data = await response.json();
-      setCoupons(data);
+      if (!data.success) throw new Error(data.error || 'Failed to fetch coupons');
+      setCoupons(data.coupons);
     } catch (err) {
-      setError('Failed to fetch coupons');
+      setError(err instanceof Error ? err.message : 'An unknown error occurred');
       console.error(err);
     } finally {
       setIsLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchCoupons();
-  }, []);
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+    setSelectedCoupon(null);
+  };
 
-  const handleCreateCoupon = async (formData: Coupon) => {
+  const handleCopyCode = async (code: string) => {
     try {
-      const response = await fetch('/api/coupon', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
-      if (!response.ok) throw new Error('Failed to create coupon');
-      await fetchCoupons();
-      setIsModalOpen(false);
+      await navigator.clipboard.writeText(code);
+      setCopySuccess(`Code ${code} copied!`);
+      setTimeout(() => setCopySuccess(''), 2000);
     } catch (err) {
-      setError('Failed to create coupon');
-      console.error(err);
+      console.error('Failed to copy code:', err);
+      setError('Failed to copy code to clipboard');
     }
   };
 
-  const handleUpdateCoupon = async (formData: Coupon) => {
-    if (!selectedCoupon) return;
-    try {
-      const response = await fetch(`/api/coupon/${selectedCoupon.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
-      if (!response.ok) throw new Error('Failed to update coupon');
-      await fetchCoupons();
-      setIsModalOpen(false);
-      setSelectedCoupon(null);
-    } catch (err) {
-      setError('Failed to update coupon');
-      console.error(err);
+  const handleSort = (key: keyof Coupon) => {
+    let direction: SortConfig['direction'] = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
     }
+    setSortConfig({ key, direction });
   };
 
-  const handleDeleteCoupon = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this coupon?')) return;
-    try {
-      const response = await fetch(`/api/coupon/${id}`, { method: 'DELETE' });
-      if (!response.ok) throw new Error('Failed to delete coupon');
-      await fetchCoupons();
-    } catch (err) {
-      setError('Failed to delete coupon');
-      console.error(err);
-    }
-  };
-
-  const filteredCoupons = coupons.filter((coupon) =>
-    coupon.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    coupon.merchantName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    coupon.couponCode.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const handleModalSubmit = async (formData: Coupon) => {
-    if (selectedCoupon) {
-      await handleUpdateCoupon(formData);
+  const handleVisitCoupon = (clickurl: string) => {
+    if (clickurl) {
+      window.open(clickurl, '_blank', 'noopener,noreferrer');
     } else {
-      await handleCreateCoupon(formData);
+      setError('No coupon link available');
     }
   };
 
-  return (
+  const handleModalSubmit = async (data: Coupon) => { 
+    setIsModalOpen(false);
+  };
+
+  const filteredAndSortedCoupons = React.useMemo(() => {
+    let filtered = [...coupons];
+    
+    // Apply search filter
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      filtered = filtered.filter((coupon) =>
+        coupon.title.toLowerCase().includes(searchLower) ||
+        coupon.merchantName.toLowerCase().includes(searchLower) ||
+        coupon.couponCode.toLowerCase().includes(searchLower)
+      );
+    }
+
+    // Apply category filter
+    if (selectedCategory !== ALL_CATEGORIES) {
+      filtered = filtered.filter((coupon) => 
+        coupon.category === selectedCategory
+      );
+    }
+
+    // Apply sorting
+    if (sortConfig.key && sortConfig.direction) {
+      filtered.sort((a, b) => {
+        const aValue = sortConfig.key ? a[sortConfig.key] : '';
+        const bValue = sortConfig.key ? b[sortConfig.key] : '';
+        
+        if (aValue < bValue) {
+          return sortConfig.direction === 'asc' ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortConfig.direction === 'asc' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+
+    return filtered;
+  }, [coupons, searchTerm, selectedCategory, sortConfig]);
+
+  const daysUntilExpiration = (expirationDate: string): number => {
+    const today = new Date();
+    const expDate = new Date(expirationDate);
+    const diffTime = expDate.getTime() - today.getTime();
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  };
+
+  return (<>
     <div className="p-8">
       <Card>
-        <CardHeader className="flex justify-between">
-          <CardTitle>Coupon Management</CardTitle>
-          <Button
-            onClick={() => {
-              setSelectedCoupon(null);
-              setIsModalOpen(true);
-            }}
-          >
-            <Plus className="mr-2 h-4 w-4" /> Add Coupon
-          </Button>
-        </CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
+  <CardTitle>Coupon Management</CardTitle>
+  <Button onClick={() => setIsModalOpen(true)}>
+    <Plus className="mr-2 h-4 w-4" /> Add Coupon
+  </Button>
+</CardHeader>
         <CardContent>
-          <div className="flex gap-4 mb-4">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <div className="flex gap-4 mb-6">
+            <div className="relative flex-1">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
               <Input
                 placeholder="Search coupons..."
                 value={searchTerm}
@@ -149,21 +200,55 @@ export default function CouponsPage() {
                 className="pl-8"
               />
             </div>
+            <Select
+              value={selectedCategory}
+              onValueChange={(value: CategoryFilter) => setSelectedCategory(value)}
+            >
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Filter by category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL_CATEGORIES}>All Categories</SelectItem>
+                {CATEGORIES.map((category) => (
+                  <SelectItem key={category} value={category}>
+                    {category}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
+          
+
           {error && (
             <Alert variant="destructive" className="mb-4">
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
+
+          {copySuccess && (
+            <Alert className="mb-4 bg-green-50">
+              <AlertDescription>{copySuccess}</AlertDescription>
+            </Alert>
+          )}
+
           <div className="rounded-md border">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Title</TableHead>
+                  <TableHead 
+                    className="cursor-pointer"
+                    onClick={() => handleSort('title')}
+                  >
+                    Title {sortConfig.key === 'title' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                  </TableHead>
                   <TableHead>Merchant</TableHead>
-                  <TableHead>Icon</TableHead>
                   <TableHead>Code</TableHead>
-                  <TableHead>Expiration</TableHead>
+                  <TableHead 
+                    className="cursor-pointer"
+                    onClick={() => handleSort('expirationDate')}
+                  >
+                    Expires In {sortConfig.key === 'expirationDate' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                  </TableHead>
                   <TableHead>Discount</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
@@ -171,42 +256,90 @@ export default function CouponsPage() {
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center">
-                      Loading...
+                    <TableCell colSpan={6} className="text-center py-8">
+                      <div className="flex justify-center items-center space-x-2">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900"></div>
+                        <span>Loading...</span>
+                      </div>
                     </TableCell>
                   </TableRow>
-                ) : filteredCoupons.length === 0 ? (
+                ) : filteredAndSortedCoupons.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center">
+                    <TableCell colSpan={6} className="text-center py-8">
                       No coupons found
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredCoupons.map((coupon) => (
-                    <TableRow key={coupon.id}>
-                      <TableCell>{coupon.title}</TableCell>
-                      <TableCell><Image src={coupon.merchantLogo} alt={coupon.merchantName} width={50} height={50} /></TableCell> 
-                      <TableCell>{coupon.couponCode}</TableCell>
-                      <TableCell>{new Date(coupon.expirationDate).toLocaleDateString()}</TableCell>
-                      <TableCell>{coupon.discount}</TableCell>
+                  filteredAndSortedCoupons.map((coupon) => (
+                    <TableRow key={coupon._id} className="hover:bg-gray-50">
+                      <TableCell>
+                        <div className="font-medium">{coupon.title}</div>
+                        <div className="text-sm text-gray-500">{coupon.description}</div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                          {coupon.merchantLogo && (
+                            <img 
+                              src={coupon.merchantLogo} 
+                              alt={coupon.merchantName}
+                              className="w-8 h-8 object-contain rounded"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.src = '/placeholder.png';
+                              }}
+                            />
+                          )}
+                          <span>{coupon.merchantName}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                          <code className="bg-gray-100 px-2 py-1 rounded">
+                            {coupon.couponCode}
+                          </code>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleCopyCode(coupon.couponCode)}
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className={`${
+                          daysUntilExpiration(coupon.expirationDate) < 7
+                            ? 'text-red-600'
+                            : daysUntilExpiration(coupon.expirationDate) < 30
+                            ? 'text-yellow-600'
+                            : 'text-green-600'
+                        }`}>
+                          {daysUntilExpiration(coupon.expirationDate)} days
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="font-medium text-green-600">
+                          {coupon.discount}
+                        </span>
+                      </TableCell>
                       <TableCell>
                         <div className="flex space-x-2">
+                          {coupon.clickurl && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="hover:bg-blue-50"
+                              onClick={() => handleVisitCoupon(coupon.clickurl)}
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                            </Button>
+                          )}
                           <Button
-                            variant="outline"
+                            variant="ghost"
                             size="sm"
-                            onClick={() => {
-                              setSelectedCoupon(coupon);
-                              setIsModalOpen(true);
-                            }}
+                            className="hover:bg-red-50"
                           >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => handleDeleteCoupon(coupon.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-4 w-4 text-red-500" />
                           </Button>
                         </div>
                       </TableCell>
@@ -218,12 +351,14 @@ export default function CouponsPage() {
           </div>
         </CardContent>
       </Card>
-      <CouponFormModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSubmit={handleModalSubmit}
-        coupon={selectedCoupon}
-      />
+      
     </div>
+    <CouponFormModal
+  isOpen={isModalOpen}
+  onClose={handleModalClose}
+  onSubmit={handleModalSubmit}
+  coupon={selectedCoupon}
+/>
+    </>
   );
 }
