@@ -12,6 +12,7 @@ class OnboardingScreen extends StatefulWidget {
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
+  final TextEditingController _nameController = TextEditingController();
   bool _isLastPage = false;
   
   String _selectedGender = '';
@@ -52,6 +53,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             },
             children: [
               _buildWelcomePage(),
+              _buildNameInputPage(),
               _buildGenderSelectionPage(),
               _buildCategorySelectionPage(),
             ],
@@ -59,58 +61,97 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         ),
       ),
       bottomSheet: _isLastPage
+      
           ? _buildGetStartedButton()
           : _buildNavigationBar(),
     );
   }
 
+  Widget _buildNameInputPage() {
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            'What should we call you?',
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Enter your name to personalize your experience',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.grey.shade600,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 40),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: TextField(
+              controller: _nameController,
+              decoration: InputDecoration(
+                hintText: 'Your Name',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color: Theme.of(context).primaryColor,
+                    width: 2,
+                  ),
+                ),
+              ),
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+
   Widget _buildNavigationBar() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       height: 80,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-          ),
-        ],
-      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           TextButton(
             onPressed: () => _pageController.jumpToPage(2),
-            child: const Text(
-              'SKIP',
-              style: TextStyle(fontWeight: FontWeight.w600),
-            ),
+            child: const Text('SKIP'),
           ),
-          Center(
-            child: SmoothPageIndicator(
-              controller: _pageController,
-              count: 3,
-              effect: ExpandingDotsEffect(
-                spacing: 8,
-                radius: 10,
-                dotWidth: 8,
-                dotHeight: 8,
-                dotColor: Colors.grey.shade300,
-                activeDotColor: Theme.of(context).primaryColor,
-              ),
+          SmoothPageIndicator(
+            controller: _pageController,
+            count: 3,
+            effect: ExpandingDotsEffect(
+              dotColor: Colors.grey.shade300,
+              activeDotColor: Theme.of(context).primaryColor,
             ),
           ),
           TextButton(
-            onPressed: () => _pageController.nextPage(
-              duration: const Duration(milliseconds: 500),
-              curve: Curves.easeInOut,
-            ),
-            child: const Text(
-              'NEXT',
-              style: TextStyle(fontWeight: FontWeight.w600),
-            ),
+            onPressed: () {
+              if (_pageController.page == 0 && _nameController.text.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Please enter your name')),
+                );
+                return;
+              }
+              _pageController.nextPage(
+                duration: const Duration(milliseconds: 500),
+                curve: Curves.easeInOut,
+              );
+            },
+            child: const Text('NEXT'),
           ),
         ],
       ),
@@ -409,9 +450,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Future<void> _savePreferences() async {
     final String categoryCode = CategoryCode.generateCode(_selectedCategories);
-    await OneSignal.User.addTags({
+     await OneSignal.User.addTags({
+      'name': _nameController.text.trim(),
       'gender': _selectedGender.toLowerCase(),
-      'preferences': categoryCode
+      'preferences': CategoryCode.generateCode(_selectedCategories)
     });
     
     debugPrint('Saved gender: ${_selectedGender.toLowerCase()}');
@@ -422,6 +464,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   void dispose() {
     _pageController.dispose();
+    _nameController.dispose();
     super.dispose();
   }
 }
