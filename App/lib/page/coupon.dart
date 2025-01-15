@@ -727,104 +727,54 @@ class CouponDetailsSheet extends StatelessWidget {
       }).toList(),
     );
   }
-
- Widget _buildBottomCTA(BuildContext context) {
+Widget _buildBottomCTA(BuildContext context) {
   Future<void> _copyCodeAndOpenUrl() async {
     try {
-      // First copy the code
+      // Copy the coupon code
       _copyCouponCode(context);
-      
+
+      // Open the URL if available
       if (coupon.clickurl != null && coupon.clickurl!.isNotEmpty) {
         final url = Uri.parse(coupon.clickurl!);
-        
+
         if (await canLaunchUrl(url)) {
           await launchUrl(
             url,
             mode: LaunchMode.externalApplication,
           );
         } else {
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Row(
-                  children: const [
-                    Icon(Icons.error_outline, color: Colors.white),
-                    SizedBox(width: 8),
-                    Text('Could not open store website'),
-                  ],
-                ),
-                behavior: SnackBarBehavior.floating,
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Could not open the URL')),
+          );
         }
-      }
-    } catch (e) {
-      if (context.mounted) {
+      } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: const [
-                Icon(Icons.error_outline, color: Colors.white),
-                SizedBox(width: 8),
-                Text('Error opening store website'),
-              ],
-            ),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('URL not available')),
         );
       }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('An error occurred')),
+      );
     }
   }
 
-  return Container(
-    padding: const EdgeInsets.all(16),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.1),
-          blurRadius: 10,
-          offset: const Offset(0, -5),
-        ),
-      ],
-    ),
-    child: SafeArea(
-      child: ElevatedButton(
-        onPressed: _copyCodeAndOpenUrl,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: coupon.accentColor,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.local_offer_outlined),
-            const SizedBox(width: 12),
-            const Text(
-              'Copy & Shop Now',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 0.5,
-              ),
-            ),
-            const SizedBox(width: 12),
-            const Icon(Icons.arrow_forward_rounded),
-          ],
-        ),
+  return Padding(
+    padding: const EdgeInsets.all(16.0),
+    child: ElevatedButton(
+      onPressed: _copyCodeAndOpenUrl,
+      child: const Text('Copy & Visit Shop'),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.amber, // Button background color
+        foregroundColor: Colors.white, // Button text color
+        padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
+        textStyle: const TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold),
       ),
     ),
   );
 }
 
-  // Helper Widgets
+// Helper Widgets
   Widget _buildSectionTitle(String title) {
     return Text(
       title,
