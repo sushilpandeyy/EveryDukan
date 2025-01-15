@@ -40,6 +40,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import Image from 'next/image';
 
 // Interfaces
 interface LocalCoupon {
@@ -330,7 +331,7 @@ export default function EnhancedCouponsPage() {
                         <TableCell>
                           <div className="flex items-center space-x-2">
                             {coupon.merchantLogo && (
-                              <img 
+                              <Image
                                 src={coupon.merchantLogo} 
                                 alt={coupon.merchantName}
                                 className="w-8 h-8 object-contain rounded"

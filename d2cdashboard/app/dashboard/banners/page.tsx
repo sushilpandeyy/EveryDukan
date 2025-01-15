@@ -6,6 +6,7 @@ import { Plus, Edit, Trash } from "lucide-react";
 import BannerFormModal from "@/components/banner-form-modal";
 import ConfirmationModal from "@/components/confirmation-modal";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import Image from "next/image";
 
 interface Banner {
   _id: string;
@@ -130,7 +131,7 @@ export default function BannerManagement() {
               className="rounded-lg shadow-lg overflow-hidden border dark:border-gray-700 bg-white dark:bg-gray-800 relative group"
             >
               <div className="w-full h-48 overflow-hidden">
-                <img
+                <Image
                   src={banner.bannerImage}
                   alt={banner.title}
                   className="w-auto h-full mx-auto object-contain"

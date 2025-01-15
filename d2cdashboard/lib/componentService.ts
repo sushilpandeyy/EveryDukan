@@ -1,6 +1,4 @@
 import { NextResponse } from 'next/server';
-import { connectToDatabase } from '@/lib/db';
-import Component from '@/models/Component';
 import { ComponentSchema } from '@/lib/componentValidators';
 import { ZodError } from 'zod';
 import mongoose from 'mongoose';

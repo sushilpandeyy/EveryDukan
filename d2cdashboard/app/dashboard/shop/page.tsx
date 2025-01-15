@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -60,6 +60,7 @@ import { Plus, Pencil, Trash2, Check, ChevronsUpDown } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 interface Category {
   _id: string;
@@ -102,12 +103,7 @@ export default function ShopManagement() {
     },
   });
 
-  useEffect(() => {
-    fetchShops();
-    fetchCategories();
-  }, []);
-
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       const response = await fetch("/api/category");
       if (!response.ok) throw new Error("Failed to fetch categories");
@@ -120,9 +116,9 @@ export default function ShopManagement() {
         variant: "destructive",
       });
     }
-  };
+  }, [toast]);
 
-  const fetchShops = async () => {
+  const fetchShops = useCallback(async () => {
     try {
       const response = await fetch("/api/shop");
       if (!response.ok) throw new Error("Failed to fetch shops");
@@ -135,7 +131,12 @@ export default function ShopManagement() {
         variant: "destructive",
       });
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    fetchShops();
+    fetchCategories();
+  }, [fetchCategories, fetchShops]);
 
   const handleCreate = async (data: ShopFormData) => {
     setIsLoading(true);
@@ -445,7 +446,7 @@ export default function ShopManagement() {
                   <TableRow key={shop._id}>
                     <TableCell className="font-medium">{shop.title}</TableCell>
                     <TableCell>
-                      <img
+                      <Image
                         src={shop.logo || "/placeholder.png"}
                         alt={`${shop.title} logo`}
                         className="h-8 w-8 object-contain"

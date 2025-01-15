@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -70,11 +70,8 @@ export default function CategoryManagement() {
     },
   });
 
-  useEffect(() => {
-    fetchCategories();
-  }, []);
-
-  const fetchCategories = async () => {
+  
+  const fetchCategories = useCallback(async () => {
     try {
       const response = await fetch("/api/category");
       const data = await response.json();
@@ -86,7 +83,12 @@ export default function CategoryManagement() {
         variant: "destructive",
       });
     }
-  };
+  }, [toast]);
+  
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
+
 
   const handleCreate = async (data: CategoryFormData) => {
     try {

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { TrashIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import { EditComponentDialog } from './EditComponentDialog';
 import { useState } from 'react';
+import Image from 'next/image';
 
 interface ComponentListProps {
   components: Component[];
@@ -42,7 +43,7 @@ export function ComponentList({ components, onDelete, onReorder, onEdit }: Compo
             <div className="grid grid-cols-2 gap-2">
               {banners.slice(currentIndex, currentIndex + 2).map((banner, index) => (
                 <div key={index} className="relative h-32 rounded-md overflow-hidden border border-border">
-                  <img
+                  <Image
                     src={banner.imageUrl}
                     alt={banner.title}
                     className="w-full h-full object-cover"
@@ -83,7 +84,7 @@ export function ComponentList({ components, onDelete, onReorder, onEdit }: Compo
             <div className="grid grid-cols-4 gap-2">
               {brands.slice(currentIndex, currentIndex + 4).map((brand, index) => (
                 <div key={index} className="relative h-20 rounded-md overflow-hidden bg-accent/10 border border-border p-2">
-                  <img
+                  <Image
                     src={brand.logoUrl}
                     alt={brand.title}
                     className="w-full h-full object-contain"
@@ -120,8 +121,8 @@ export function ComponentList({ components, onDelete, onReorder, onEdit }: Compo
       case 'BannerCard':
         return (
           <div className="mt-2 relative h-40 rounded-md overflow-hidden border border-border">
-            <img
-              src={component.imageUrl}
+            <Image
+              src={component.imageUrl || '/default-image.png'}
               alt={component.title}
               className="w-full h-full object-cover"
             />

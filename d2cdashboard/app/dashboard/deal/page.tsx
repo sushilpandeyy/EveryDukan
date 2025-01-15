@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -68,6 +68,7 @@ import {
   ChevronsUpDown 
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 // Form Schema
 const dealFormSchema = z.object({
@@ -121,7 +122,7 @@ export default function DealsPage() {
   });
 
   // Fetch deals
-  const fetchDeals = async () => {
+  const fetchDeals = useCallback(async () => {
     try {
       setIsLoading(true);
       const queryParams = new URLSearchParams({
@@ -131,12 +132,12 @@ export default function DealsPage() {
         sortBy,
         sortOrder,
       });
-
+  
       const response = await fetch(`/api/deals?${queryParams}`);
       const data = await response.json();
-
+  
       if (!response.ok) throw new Error(data.error);
-
+  
       setDeals(data.deals);
       setTotalPages(data.pagination.totalPages);
     } catch (error: any) {
@@ -148,16 +149,16 @@ export default function DealsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [currentPage, searchQuery, sortBy, sortOrder, toast]);
 
-  // Search and sort effect
   useEffect(() => {
     const debounceTimeout = setTimeout(() => {
       fetchDeals();
     }, 300);
-
+  
     return () => clearTimeout(debounceTimeout);
-  }, [currentPage, searchQuery, sortBy, sortOrder]);
+  }, [fetchDeals]);
+  
 
   // CRUD operations
   const handleCreate = async (data: DealFormData) => {
@@ -527,7 +528,7 @@ export default function DealsPage() {
                     <TableRow key={deal._id}>
                       <TableCell>
                         <div className="h-12 w-12 relative rounded overflow-hidden">
-                          <img
+                          <Image
                             src={deal.imageUrl}
                             alt={deal.title}
                             className="h-full w-full object-cover"
