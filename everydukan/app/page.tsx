@@ -1,101 +1,231 @@
-import Image from "next/image";
+"use client";
+import React, { useState, useEffect } from 'react';
+import { ShoppingBag, Smartphone, Bell, Tag, TrendingUp, Download, Sparkles, Shield, Store, ChevronLeft, ChevronRight, Check } from 'lucide-react';
 
-export default function Home() {
+interface Statistic {
+  value: number;
+  label: string;
+  suffix: string;
+}
+
+interface Deal {
+  brandName: string;
+  discount: number;
+  originalPrice: number;
+  currentPrice: number;
+  category: string;
+  image: string;
+}
+
+interface Feature {
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+}
+
+const Home = () => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [activeSlide, setActiveSlide] = useState(0);
+  const [animatedStats, setAnimatedStats] = useState<Statistic[]>([
+    { value: 0, label: 'Active Users', suffix: 'K+' },
+    { value: 0, label: 'Brands', suffix: '+' },
+    { value: 0, label: 'Avg. Savings', suffix: '%' }
+  ]);
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  
+  const targetStats: Statistic[] = [
+    { value: 500, label: 'Active Users', suffix: 'K+' },
+    { value: 250, label: 'Brands', suffix: '+' },
+    { value: 45, label: 'Avg. Savings', suffix: '%' }
+  ];
+
+  const categories = ['All', 'Fashion', 'Electronics', 'Beauty', 'Home'];
+  
+  const deals: Deal[] = [
+    {
+      brandName: 'FashionBrand',
+      discount: 40,
+      originalPrice: 2999,
+      currentPrice: 1799,
+      category: 'Fashion',
+      image: '/api/placeholder/200/200'
+    },
+    {
+      brandName: 'TechGear',
+      discount: 30,
+      originalPrice: 15999,
+      currentPrice: 11199,
+      category: 'Electronics',
+      image: '/api/placeholder/200/200'
+    },
+    {
+      brandName: 'BeautyEssentials',
+      discount: 25,
+      originalPrice: 1299,
+      currentPrice: 974,
+      category: 'Beauty',
+      image: '/api/placeholder/200/200'
+    },
+    {
+      brandName: 'HomeDécor',
+      discount: 35,
+      originalPrice: 4999,
+      currentPrice: 3249,
+      category: 'Home',
+      image: '/api/placeholder/200/200'
+    }
+  ];
+
+  useEffect(() => {
+    const animateStats = () => {
+      const duration = 2000; // Animation duration in milliseconds
+      const steps = 60; // Number of steps in animation
+      const interval = duration / steps;
+      
+      let currentStep = 0;
+      
+      const timer = setInterval(() => {
+        if (currentStep >= steps) {
+          clearInterval(timer);
+          return;
+        }
+        
+        setAnimatedStats(prevStats =>
+          prevStats.map((stat, index) => ({
+            ...stat,
+            value: Math.round((targetStats[index].value / steps) * currentStep)
+          }))
+        );
+        
+        currentStep++;
+      }, interval);
+    };
+
+    // Start animation when component mounts
+    animateStats();
+  }, []);
+
+  const features: Feature[] = [
+    {
+      title: "Discover D2C Brands",
+      description: "Shop directly from India's most innovative brands with exclusive deals and offers.",
+      icon: <ShoppingBag className="w-6 h-6 text-amber-500" />
+    },
+    {
+      title: "Smart Deal Alerts",
+      description: "Get instant notifications when prices drop on your favorite items.",
+      icon: <Bell className="w-6 h-6 text-amber-500" />
+    },
+    {
+      title: "Personalized Savings",
+      description: "Receive tailored deal recommendations based on your shopping preferences.",
+      icon: <Tag className="w-6 h-6 text-amber-500" />
+    },
+    {
+      title: "Exclusive Discounts",
+      description: "Get access to special discounts and limited-time offers from top D2C brands.",
+      icon: <TrendingUp className="w-6 h-6 text-amber-500" />
+    }
+  ];
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    <div className="min-h-screen bg-white">
+      {/* Navigation */}
+      <nav className="bg-white shadow-md">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16">
+            <div className="flex items-center">
+              <span className="text-2xl font-bold text-amber-500">EveryDukan</span>
+            </div>
+            
+            <div className="hidden md:flex items-center space-x-8">
+              <button className="bg-amber-500 text-white px-6 py-2 rounded-full hover:bg-amber-600">
+                Download App
+              </button>
+            </div>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            <button 
+              className="md:hidden"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+            >
+              <svg className="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </nav>
+
+      {/* Hero Section */}
+      <div className="relative bg-white overflow-hidden">
+        <div className="max-w-7xl mx-auto">
+          <div className="relative z-10 pb-8 bg-white sm:pb-16 md:pb-20 lg:pb-28 xl:pb-32">
+            <main className="mt-10 mx-auto max-w-7xl px-4 sm:mt-12 sm:px-6 md:mt-16 lg:mt-20 lg:px-8 xl:mt-28">
+              <div className="text-center lg:text-left">
+                <h1 className="text-4xl tracking-tight font-extrabold text-gray-900 sm:text-5xl md:text-6xl">
+                  <span className="block">Save More on</span>
+                  <span className="block text-amber-500">Indian D2C Brands</span>
+                </h1>
+                <p className="mt-3 text-base text-gray-500 sm:mt-5 sm:text-lg sm:max-w-xl sm:mx-auto md:mt-5 md:text-xl lg:mx-0">
+                  Your smart shopping companion that finds the best deals, tracks prices, and notifies you of savings across all your favorite Indian D2C brands.
+                </p>
+                <div className="mt-5 sm:mt-8 sm:flex sm:justify-center lg:justify-start">
+                  <div className="rounded-md shadow">
+                    <button className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-amber-500 hover:bg-amber-600 md:py-4 md:text-lg md:px-10">
+                      <Smartphone className="w-5 h-5 mr-2" />
+                      Get Started
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </main>
+          </div>
+        </div>
+      </div>
+
+        
+      {/* Features Section */}
+      <div className="py-12 bg-gray-50" id="features">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <h2 className="text-3xl font-extrabold text-gray-900">
+              Smart Shopping, Smarter Savings
+            </h2>
+            <p className="mt-4 text-xl text-gray-500">
+              Everything you need to save money while shopping from your favorite brands.
+            </p>
+          </div>
+
+          <div className="mt-20">
+            <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+              {features.map((feature, index) => (
+                <div key={index} className="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300">
+                  <div className="p-2 inline-block bg-amber-100 rounded-lg">
+                    {feature.icon}
+                  </div>
+                  <h3 className="mt-4 text-lg font-medium text-gray-900">{feature.title}</h3>
+                  <p className="mt-2 text-gray-500">{feature.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Menu */}
+      {isMenuOpen && (
+        <div className="md:hidden">
+          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+            <a href="#features" className="block px-3 py-2 text-gray-600">Features</a>
+            <a href="#how-it-works" className="block px-3 py-2 text-gray-600">How it Works</a>
+            <button className="block w-full text-left px-3 py-2 bg-amber-500 text-white rounded">
+              Download App
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
-}
+};
+
+export default Home;
