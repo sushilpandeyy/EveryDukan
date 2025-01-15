@@ -374,13 +374,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ListTile(
             leading: const Icon(Icons.privacy_tip_outlined),
             title: const Text('Privacy Policy'),
-            onTap: () => _launchURL('https://dealspotter.com/privacy'),
+            onTap: () => _launchURL('https://everydukan.com/privacy-policy'),
           ),
           const Divider(height: 1),
           ListTile(
             leading: const Icon(Icons.description_outlined),
             title: const Text('Terms of Service'),
-            onTap: () => _launchURL('https://dealspotter.com/terms'),
+            onTap: () => _launchURL('https://everydukan.com/terms-service'),
           ),
         ],
       ),
