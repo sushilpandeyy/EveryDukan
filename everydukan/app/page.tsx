@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { ShoppingBag, Smartphone, Bell, Tag, TrendingUp } from 'lucide-react';
- 
+ import Footer from './components/Footer';
 interface Feature {
   title: string;
   description: string;
@@ -154,6 +154,8 @@ const Home = () => {
           </div>
         </div>
       )}
+
+      <Footer />
     </div>
   );
 };
