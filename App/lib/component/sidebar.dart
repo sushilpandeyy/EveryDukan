@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import '../page/setting.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SidebarDrawer extends StatelessWidget {
   const SidebarDrawer({super.key});
@@ -167,7 +168,7 @@ class SidebarDrawer extends StatelessWidget {
                         context,
                         icon: Icons.help_outline_rounded,
                         title: 'Help & Support',
-                        onTap: () => Navigator.pushNamed(context, '/support'),
+                        onTap: () => _launchURL('https://everydukan.com/help-support'),
                       ),
                     ],
                   ),
@@ -245,6 +246,16 @@ class SidebarDrawer extends StatelessWidget {
         ...children,
       ],
     );
+  }
+
+  Future<void> _launchURL(String urlString) async {
+    final Uri url = Uri.parse(urlString);
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    } else {
+      // Handle error
+      print('Could not launch $urlString');
+    }
   }
 
   Widget _buildMenuItem(
