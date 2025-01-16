@@ -456,6 +456,7 @@ export default function DealsPage() {
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="endDate">End Date</SelectItem>
                   <SelectItem value="createdAt">Created Date</SelectItem>
                   <SelectItem value="title">Title</SelectItem>
                   <SelectItem value="originalPrice">Original Price</SelectItem>
@@ -531,6 +532,7 @@ export default function DealsPage() {
                           <Image
                             src={deal.imageUrl}
                             width={48}
+                            height={48}
                             alt={deal.title}
                             className="h-full w-full object-cover"
                             onError={(e) => {

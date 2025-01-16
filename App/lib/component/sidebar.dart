@@ -96,7 +96,7 @@ class SidebarDrawer extends StatelessWidget {
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: const Text(
-                    'Discover Amazing Deals',
+                    'Make Your Dadi Proud',
                     style: TextStyle(
                       fontSize: 14,
                       color: Colors.black87,
@@ -168,8 +168,8 @@ class SidebarDrawer extends StatelessWidget {
                         context,
                         icon: Icons.help_outline_rounded,
                         title: 'Help & Support',
-                        onTap: () => _launchURL('https://everydukan.com/help-support'),
-                      ),
+                        onTap: () => _launchUrl('https://everydukan.com/help-support'),
+                        ),
                     ],
                   ),
                 ],
@@ -248,15 +248,28 @@ class SidebarDrawer extends StatelessWidget {
     );
   }
 
-  Future<void> _launchURL(String urlString) async {
-    final Uri url = Uri.parse(urlString);
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url, mode: LaunchMode.externalApplication);
-    } else {
-      // Handle error
-      print('Could not launch $urlString');
+   Future<void> _launchUrl(String url) async {
+    try {
+      String cleanUrl = url.trim();
+      if (!cleanUrl.startsWith('http')) cleanUrl = 'https://$cleanUrl';
+      final uri = Uri.parse(cleanUrl);
+      
+      try {
+        final launched = await launchUrl(
+          uri,
+          mode: LaunchMode.externalNonBrowserApplication,
+          webViewConfiguration: const WebViewConfiguration(enableJavaScript: true, enableDomStorage: true),
+        );
+      } catch (e) {
+        debugPrint('Chrome launch failed: $e');
+      }
+
+      final fallbackLaunched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (e) {
+      debugPrint('Failed to launch URL: $e');
     }
   }
+
 
   Widget _buildMenuItem(
     BuildContext context, {

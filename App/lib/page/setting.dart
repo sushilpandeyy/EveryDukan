@@ -93,6 +93,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  Future<void> _launchUrl(String url) async {
+    try {
+      String cleanUrl = url.trim();
+      if (!cleanUrl.startsWith('http')) cleanUrl = 'https://$cleanUrl';
+      final uri = Uri.parse(cleanUrl);
+      
+      try {
+        final launched = await launchUrl(
+          uri,
+          mode: LaunchMode.externalNonBrowserApplication,
+          webViewConfiguration: const WebViewConfiguration(enableJavaScript: true, enableDomStorage: true),
+        );
+      } catch (e) {
+        debugPrint('Chrome launch failed: $e');
+      }
+
+      final fallbackLaunched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (e) {
+      debugPrint('Failed to launch URL: $e');
+    }
+  }
+
   void _updatePreferencesFromCode(String preferencesCode, String gender) {
     // Reset all preferences
     void resetPrefs(Map<String, bool> prefs) {
@@ -375,13 +397,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ListTile(
             leading: const Icon(Icons.privacy_tip_outlined),
             title: const Text('Privacy Policy'),
-            onTap: () => _launchURL('https://everydukan.com/privacy-policy'),
+            onTap: () => _launchUrl('https://everydukan.com/privacy-policy'),
           ),
           const Divider(height: 1),
           ListTile(
             leading: const Icon(Icons.description_outlined),
             title: const Text('Terms of Service'),
-            onTap: () => _launchURL('https://everydukan.com/terms-service'),
+            onTap: () => _launchUrl('https://everydukan.com/terms-service'),
           ),
         ],
       ),
@@ -458,22 +480,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
       await launchUrl(playStoreUri);
     } else {
       // Fallback to website
-      await _launchURL(
+      await _launchUrl(
         'https://play.google.com/store/apps/details?id=com.dealspotter.app',
       );
     }
   }
 
-  Future<void> _launchURL(String urlString) async {
-    final Uri url = Uri.parse(urlString);
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url, mode: LaunchMode.externalApplication);
-    } else {
-      // Handle error
-      print('Could not launch $urlString');
-    }
-  }
-
+   
   void _shareApp() {
     Share.share(
         "🛒 Psst... India’s top D2C deals are waiting for you! 💥\n\nFrom fashion to gadgets, *EveryDukan* finds all the best offers and tells *you* first! 🤑\n\n📲 Grab the app & shop smarter: [https://play.google.com/store/apps/details?id=com.everydukan](https://play.google.com/store/apps/details?id=com.everydukan)\n\n*Why hunt for deals when we do it for you?* 😉\n\n#EveryDukan #StealTheDeals",
