@@ -598,7 +598,7 @@ class CouponDetailsSheet extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 24,
-            backgroundColor: Colors.amber,
+            backgroundColor: Colors.blueGrey,
             child: ClipOval(
   child: Image.network(
     coupon.merchantLogo, // External image URL
