@@ -296,8 +296,8 @@ class SidebarDrawer extends StatelessWidget {
 
   void _shareApp() {
     Share.share(
-      'Check out EveryDukan for amazing deals and offers!\nhttps://play.google.com/store/apps/details?id=com.everydukan',
-      subject: 'EveryDukan - Your Deal Discovery App',
-    );
+        "🛒 *Psst... India’s top D2C deals are waiting for you!* 💥\n\nFrom fashion to gadgets, *EveryDukan* finds all the best offers and tells *you* first! 🤑\n\n📲 Grab the app & shop smarter: [https://play.google.com/store/apps/details?id=com.everydukan](https://play.google.com/store/apps/details?id=com.everydukan)\n\n*Why hunt for deals when we do it for you?* 😉\n\n#EveryDukan #StealTheDeals",
+  subject: 'EveryDukan - Your Deal Discovery App'
+);
   }
 }
