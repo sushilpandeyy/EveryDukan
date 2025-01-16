@@ -519,15 +519,16 @@ Widget _buildLowerSection(BuildContext context) {
                     color: Colors.black87,
                   ),
                   onPressed: () async {
-                    final shareText =   "💸 *Save big with ${coupon.merchantName}!* 💸\n\n" +  
-  "🎟️ *Use code:* ${coupon.couponCode}\n" +  
-  "📢 ${coupon.title}\n" +  
-  "⏳ *Valid until:* ${coupon.expirationDate}\n\n" +  
-  "🛍️ *Found this deal on EveryDukan – your deal discovery buddy!* 🎉\n" +  
-  "📲 Download the app: https://play.google.com/store/apps/details?id=com.everydukan\n\n" +  
-  "#EveryDukan #CouponCode #SaveBig";
-                    await Share.share(shareText);
-                  },
+    final shareText = 
+        "💸 Save big with ${coupon.merchantName}! 💸\n\n" +  
+        "🎟️ Use code: ${coupon.couponCode}\n" +  
+        "📢 ${coupon.title}\n" +  
+        "⏳ Valid until: ${coupon.expirationDate}\n\n" +  
+        "🛍️ Found this deal on EveryDukan – your deal discovery buddy! 🎉\n" +  
+        "📲 Download the app: https://play.google.com/store/apps/details?id=com.everydukan\n\n" +  
+        "#EveryDukan #CouponCode #SaveBig";
+    await Share.share(shareText);
+},
                   padding: EdgeInsets.zero,
                 ),
               ),

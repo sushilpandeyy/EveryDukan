@@ -19,15 +19,12 @@ class DealsPage extends StatefulWidget {
 }
 
 class _DealsPageState extends State<DealsPage> {
-  int _currentIndex = 1;
-  final List<DealCard> _deals = [];
-  bool _isLoading = false;
-  bool _hasNextPage = true;
-  final ScrollController _scrollController = ScrollController();
-  int _currentPage = 1;
-  bool _isInitialLoading = true;
-  late final FirebaseAnalytics analytics;
+  // Constants
+  static const int _itemsPerPage = 10;
+  static const double _cardSpacing = 16.0;
+  static const double _imageDimension = 200.0;
   
+  // Analytics Event Constants
   static const String EVENT_DEAL_PAGE_VIEW = 'deal_page_view';
   static const String EVENT_DEAL_CLICK = 'deal_click';
   static const String EVENT_DEAL_SHARE = 'deal_share';
@@ -36,28 +33,53 @@ class _DealsPageState extends State<DealsPage> {
   static const String EVENT_ERROR_OCCURRED = 'deals_error';
   static const String EVENT_LOAD_MORE = 'load_more_deals';
 
+  // State Variables
+  int _currentIndex = 1;
+  final List<DealCard> _deals = [];
+  bool _isLoading = false;
+  bool _hasNextPage = true;
+  final ScrollController _scrollController = ScrollController();
+  int _currentPage = 1;
+  bool _isInitialLoading = true;
+  late final FirebaseAnalytics analytics;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeAnalytics();
+    _loadMoreDeals();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  // Analytics Methods
   Future<void> _initializeAnalytics() async {
     try {
       await Firebase.initializeApp();
       analytics = FirebaseAnalytics.instance;
       
-      await analytics.logScreenView(
-        screenName: 'DealsPage',
-        screenClass: 'DealsPage',
-      );
-      
-      await analytics.setUserProperty(
-        name: 'last_viewed_screen',
-        value: 'deals',
-      );
-      
-      await analytics.logEvent(
-        name: EVENT_DEAL_PAGE_VIEW,
-        parameters: {
-          'timestamp': DateTime.now().toIso8601String(),
-          'is_first_load': true,
-        },
-      );
+      await Future.wait([
+        analytics.logScreenView(
+          screenName: 'DealsPage',
+          screenClass: 'DealsPage',
+        ),
+        analytics.setUserProperty(
+          name: 'last_viewed_screen',
+          value: 'deals',
+        ),
+        analytics.logEvent(
+          name: EVENT_DEAL_PAGE_VIEW,
+          parameters: {
+            'timestamp': DateTime.now().toIso8601String(),
+            'is_first_load': true,
+          },
+        ),
+      ]);
     } catch (e) {
       debugPrint('Failed to initialize Firebase Analytics: $e');
     }
@@ -77,20 +99,7 @@ class _DealsPageState extends State<DealsPage> {
     }
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _initializeAnalytics();
-    _loadMoreDeals();
-    _scrollController.addListener(_onScroll);
-  }
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
-
+  // Scroll Handling
   void _onScroll() {
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 200) {
@@ -104,6 +113,7 @@ class _DealsPageState extends State<DealsPage> {
     }
   }
 
+  // Data Loading Methods
   Future<void> _loadMoreDeals() async {
     if (_isLoading || !_hasNextPage) return;
 
@@ -112,76 +122,15 @@ class _DealsPageState extends State<DealsPage> {
     });
 
     try {
-      final cachedData = await DealsCacheManager.getCachedDealsData(_currentPage);
-      if (cachedData != null) {
-        final deals = cachedData['Deal'] as List;
-        final pagination = cachedData['pagination'];
-
-        final newDeals = deals.map((deal) => DealCard(
-          imageUrl: deal['imageUrl'],
-          title: deal['title'],
-          subtitle: deal['subtitle'],
-          originalPrice: deal['originalPrice'].toDouble(),
-          discountedPrice: deal['discountedPrice'].toDouble(),
-          shopUrl: deal['shopUrl'],
-        )).toList();
-
-        await _logAnalyticsEvent('deals_data_loaded', {
-          'source': 'cache',
-          'page': _currentPage,
-          'deal_count': newDeals.length,
+      final deals = await _fetchDeals();
+      
+      if (mounted) {
+        setState(() {
+          _deals.addAll(deals);
+          _currentPage++;
+          _isLoading = false;
+          _isInitialLoading = false;
         });
-
-        if (mounted) {
-          setState(() {
-            _deals.addAll(newDeals);
-            _currentPage++;
-            _hasNextPage = pagination['hasNextPage'];
-            _isLoading = false;
-            _isInitialLoading = false;
-          });
-        }
-        return;
-      }
-
-      final response = await http.get(
-        Uri.parse('https://19ax8udl06.execute-api.ap-south-1.amazonaws.com/deals?page=$_currentPage&limit=10'),
-      );
-
-      if (response.statusCode == 200) {
-        await DealsCacheManager.cacheDealsData(_currentPage, response.body);
-        
-        final data = json.decode(response.body);
-        final deals = data['Deal'] as List;
-        final pagination = data['pagination'];
-
-        final newDeals = deals.map((deal) => DealCard(
-          imageUrl: deal['imageUrl'],
-          title: deal['title'],
-          subtitle: deal['subtitle'],
-          originalPrice: deal['originalPrice'].toDouble(),
-          discountedPrice: deal['discountedPrice'].toDouble(),
-          shopUrl: deal['shopUrl'],
-        )).toList();
-
-        await _logAnalyticsEvent('deals_data_loaded', {
-          'source': 'api',
-          'page': _currentPage,
-          'deal_count': newDeals.length,
-          'response_time': DateTime.now().millisecondsSinceEpoch,
-        });
-
-        if (mounted) {
-          setState(() {
-            _deals.addAll(newDeals);
-            _currentPage++;
-            _hasNextPage = pagination['hasNextPage'];
-            _isLoading = false;
-            _isInitialLoading = false;
-          });
-        }
-      } else {
-        throw Exception('Failed to load deals');
       }
     } catch (e) {
       if (mounted) {
@@ -201,6 +150,53 @@ class _DealsPageState extends State<DealsPage> {
     }
   }
 
+  Future<List<DealCard>> _fetchDeals() async {
+    // Try cache first
+    final cachedData = await DealsCacheManager.getCachedDealsData(_currentPage);
+    if (cachedData != null) {
+      return _processDealData(cachedData, 'cache');
+    }
+
+    // Fetch from API if cache miss
+    final response = await http.get(
+      Uri.parse('https://19ax8udl06.execute-api.ap-south-1.amazonaws.com/deals?page=$_currentPage&limit=$_itemsPerPage'),
+    );
+
+    if (response.statusCode == 200) {
+      await DealsCacheManager.cacheDealsData(_currentPage, response.body);
+      final data = json.decode(response.body);
+      return _processDealData(data, 'api');
+    } else {
+      throw Exception('Failed to load deals');
+    }
+  }
+
+  Future<List<DealCard>> _processDealData(dynamic data, String source) async {
+    final deals = data['Deal'] as List;
+    final pagination = data['pagination'];
+    
+    _hasNextPage = pagination['hasNextPage'];
+
+    final newDeals = deals.map((deal) => DealCard(
+      imageUrl: deal['imageUrl'],
+      title: deal['title'],
+      subtitle: deal['subtitle'],
+      originalPrice: deal['originalPrice'].toDouble(),
+      discountedPrice: deal['discountedPrice'].toDouble(),
+      shopUrl: deal['shopUrl'],
+      saleEndDate: deal['endDate'] != null ? DateTime.parse(deal['endDate']) : null,
+    )).toList();
+
+    await _logAnalyticsEvent('deals_data_loaded', {
+      'source': source,
+      'page': _currentPage,
+      'deal_count': newDeals.length,
+      if (source == 'api') 'response_time': DateTime.now().millisecondsSinceEpoch,
+    });
+
+    return newDeals;
+  }
+
   Future<void> refreshDeals() async {
     try {
       await _logAnalyticsEvent(EVENT_PAGE_REFRESH, {
@@ -208,25 +204,18 @@ class _DealsPageState extends State<DealsPage> {
       });
       
       await DealsCacheManager.clearCache();
-      _currentPage = 1;
-      _deals.clear();
-      _hasNextPage = true;
+      setState(() {
+        _currentPage = 1;
+        _deals.clear();
+        _hasNextPage = true;
+      });
       await _loadMoreDeals();
     } catch (e) {
       debugPrint('Error refreshing deals: $e');
     }
   }
 
-  void _onTabTapped(int index) {
-    _logAnalyticsEvent('navigation_change', {
-      'from_index': _currentIndex,
-      'to_index': index,
-    });
-    setState(() {
-      _currentIndex = index;
-    });
-  }
-
+  // Action Handlers
   Future<void> _handleShopNow(DealCard deal) async {
     await _logAnalyticsEvent(EVENT_SHOP_NOW, {
       'deal_title': deal.title,
@@ -246,11 +235,23 @@ class _DealsPageState extends State<DealsPage> {
       'discount_percentage': _calculateDiscount(deal.originalPrice, deal.discountedPrice),
     });
     
-    final shareText = "🔥 *Deal Alert via EveryDukan!* 🔥\n\n${deal.title}\n${deal.subtitle}\n\n🛒 *Shop now:* ${deal.shopUrl}\n\n*Brought to you by EveryDukan – India’s ultimate deal discovery app!* 🎉\n\n [https://play.google.com/store/apps/details?id=com.everydukan](https://play.google.com/store/apps/details?id=com.everydukan)\n\n#EveryDukan #DealSealed";
-    await  Share.share(
-      shareText,
-        subject: 'EveryDukan - Your Deal Discovery App'
-);
+    final shareText = _generateShareText(deal);
+    await Share.share(shareText, subject: 'EveryDukan - Your Deal Discovery App');
+  }
+
+  String _generateShareText(DealCard deal) {
+    return """🔥 Deal Alert via EveryDukan! 🔥
+
+${deal.title}
+${deal.subtitle}
+
+🛒 Shop now: ${deal.shopUrl}
+
+Brought to you by EveryDukan – India's ultimate deal discovery app! 🎉
+
+[https://play.google.com/store/apps/details?id=com.everydukan]
+
+#EveryDukan #DealSealed""";
   }
 
   Future<void> _launchURL(String url) async {
@@ -262,6 +263,7 @@ class _DealsPageState extends State<DealsPage> {
 
       final uri = Uri.parse(cleanUrl);
       
+      // Try to launch in external app first
       try {
         final launched = await launchUrl(
           uri,
@@ -279,6 +281,7 @@ class _DealsPageState extends State<DealsPage> {
         debugPrint('Chrome launch error: $e');
       }
 
+      // Fallback to default browser
       final universalLaunch = await launchUrl(
         uri,
         mode: LaunchMode.platformDefault,
@@ -302,225 +305,274 @@ class _DealsPageState extends State<DealsPage> {
     }
   }
 
-
-Widget _buildDealCard(DealCard deal) {
-    return InkWell(
-      onTap: () => _handleShopNow(deal),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
+  // UI Building Methods
+  Widget _buildDealCard(DealCard deal) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: _cardSpacing),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.15),
+            spreadRadius: 2,
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _handleShopNow(deal),
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.15),
-              spreadRadius: 2,
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Stack(
-              children: [
-                Hero(
-                  tag: 'deal_image_${deal.shopUrl}',
-                  child: ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                    child: Container(
-                      height: 140,
-                      width: double.infinity,
-                      color: Colors.grey[100],
-                      child: Image.network(
-                        deal.imageUrl,
-                        fit: BoxFit.contain,
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return Center(
-                            child: CircularProgressIndicator(
-                              value: loadingProgress.expectedTotalBytes != null
-                                  ? loadingProgress.cumulativeBytesLoaded /
-                                      loadingProgress.expectedTotalBytes!
-                                  : null,
-                              strokeWidth: 2,
-                              color: Colors.amber[700],
-                            ),
-                          );
-                        },
-                        errorBuilder: (context, error, stackTrace) {
-                          return Center(
-                            child: Icon(
-                              Icons.error_outline,
-                              size: 32,
-                              color: Colors.grey[400],
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.red[600],
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          spreadRadius: 1,
-                          blurRadius: 2,
-                          offset: const Offset(0, 1),
-                        ),
-                      ],
-                    ),
-                    child: Text(
-                      '${_calculateDiscount(deal.originalPrice, deal.discountedPrice)}% OFF',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      deal.title,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      deal.subtitle,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                        height: 1.2,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const Spacer(),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          '₹${deal.discountedPrice.toStringAsFixed(0)}',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.green[700],
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          '₹${deal.originalPrice.toStringAsFixed(0)}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            decoration: TextDecoration.lineThrough,
-                            color: Colors.grey[500],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          flex: 4,
-                          child: Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              onTap: () => _handleShopNow(deal),
-                              borderRadius: BorderRadius.circular(8),
-                              child: Ink(
-                                height: 35,
-                                decoration: BoxDecoration(
-                                  color: Colors.amber[700],
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: const Center(
-                                  child: Text(
-                                    'Shop Now',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          flex: 1,
-                          child: Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              onTap: () => _handleShare(deal),
-                              borderRadius: BorderRadius.circular(8),
-                              child: Ink(
-                                height: 35,
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[100],
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: const Center(
-                                  child: Icon(
-                                    Icons.share_outlined,
-                                    size: 18,
-                                    color: Colors.black87,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildImageSection(deal),
+              _buildContentSection(deal),
+            ],
+          ),
         ),
       ),
     );
   }
 
+  Widget _buildImageSection(DealCard deal) {
+    return Stack(
+      children: [
+        Hero(
+          tag: 'deal_image_${deal.shopUrl}',
+          child: ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+            child: Container(
+              height: _imageDimension,
+              width: double.infinity,
+              color: Colors.grey[50],
+              child: Image.network(
+                deal.imageUrl,
+                fit: BoxFit.contain,
+                loadingBuilder: _imageLoadingBuilder,
+                errorBuilder: _imageErrorBuilder,
+              ),
+            ),
+          ),
+        ),
+        _buildDiscountBadge(deal),
+        if (deal.saleEndDate != null)
+          Positioned(
+            bottom: 12,
+            left: 12,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.7),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.access_time_rounded,
+                    size: 14,
+                    color: Colors.amber[400],
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    _formatSaleEndDate(deal.saleEndDate!),
+                    style: TextStyle(
+                      color: Colors.amber[50],
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildDiscountBadge(DealCard deal) {
+    final discount = _calculateDiscount(deal.originalPrice, deal.discountedPrice);
+    return Positioned(
+      top: 12,
+      right: 12,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: Colors.red[600],
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              spreadRadius: 1,
+              blurRadius: 2,
+              offset: const Offset(0, 1),
+            ),
+          ],
+        ),
+        child: Text(
+          '$discount% OFF',
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContentSection(DealCard deal) {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            deal.title,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            deal.subtitle,
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey[600],
+              height: 1.3,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 16),
+          _buildPriceSection(deal),
+          const SizedBox(height: 16),
+          _buildActionButtons(deal),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPriceSection(DealCard deal) {
+    return Row(
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '₹${deal.discountedPrice.toStringAsFixed(0)}',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.green[700],
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '₹${deal.originalPrice.toStringAsFixed(0)}',
+              style: TextStyle(
+                fontSize: 14,
+                decoration: TextDecoration.lineThrough,
+                color: Colors.grey[500],
+              ),
+            ),
+          ],
+        ),
+        const Spacer(),
+        IconButton(
+          onPressed: () => _handleShare(deal),
+          icon: const Icon(Icons.share_outlined),
+          style: IconButton.styleFrom(
+            backgroundColor: Colors.grey[100],
+            padding: const EdgeInsets.all(12),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActionButtons(DealCard deal) {
+    return SizedBox(
+      width: double.infinity,
+      height: 48,
+      child: ElevatedButton(
+        onPressed: () => _handleShopNow(deal),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.amber[700],
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          elevation: 0,
+        ),
+        child: const Text(
+          'Shop Now',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _imageLoadingBuilder(BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
+    if (loadingProgress == null) return child;
+    return Center(
+      child: CircularProgressIndicator(
+        value: loadingProgress.expectedTotalBytes != null
+            ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+            : null,
+        strokeWidth: 2,
+        color: Colors.amber[700],
+      ),
+    );
+  }
+
+  Widget _imageErrorBuilder(BuildContext context, Object error, StackTrace? stackTrace) {
+    return Center(
+      child: Icon(
+        Icons.error_outline,
+        size: 32,
+        color: Colors.grey[400],
+      ),
+    );
+  }
 
   Widget _buildSkeletonLoading() {
-    return GridView.builder(
-      padding: const EdgeInsets.all(12),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 0.65,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-      ),
-      itemCount: 6,
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      itemCount: 3,
       itemBuilder: (context, index) => _DealCardSkeleton(),
     );
+  }
+
+  // Helper Methods
+  String _formatSaleEndDate(DateTime endDate) {
+    final now = DateTime.now();
+    final difference = endDate.difference(now);
+    
+    if (difference.inDays > 0) {
+      return '${difference.inDays}d left';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours}h left';
+    } else if (difference.inMinutes > 0) {
+      return '${difference.inMinutes}m left';
+    } else {
+      return 'Ending soon';
+    }
+  }
+
+  int _calculateDiscount(double originalPrice, double discountedPrice) {
+    return ((originalPrice - discountedPrice) / originalPrice * 100).round();
   }
 
   @override
@@ -534,31 +586,51 @@ Widget _buildDealCard(DealCard deal) {
               children: [
                 Expanded(
                   child: RefreshIndicator(
-                    onRefresh: () async {
-                      await _logAnalyticsEvent(EVENT_PAGE_REFRESH, {
-                        'current_page': _currentPage,
-                        'deal_count': _deals.length,
-                      });
-                      await refreshDeals();
-                    },
-                    child: GridView.builder(
+                    onRefresh: refreshDeals,
+                    child: ListView.builder(
                       controller: _scrollController,
-                      padding: const EdgeInsets.all(12),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        childAspectRatio: 0.65,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                      ),
-                      itemCount: _deals.length + (_hasNextPage ? 1 : 0),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      itemCount: _deals.length + (_hasNextPage ? 1 : (!_hasNextPage && _deals.isNotEmpty ? 2 : 0)),
                       itemBuilder: (context, index) {
                         if (index == _deals.length) {
-                          return _isLoading
-                              ? const Center(child: CircularProgressIndicator())
-                              : const SizedBox.shrink();
+                          if (_isLoading) {
+                            return const Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(16.0),
+                                child: CircularProgressIndicator(),
+                              ),
+                            );
+                          }
+                          
+                          if (!_hasNextPage && _deals.isNotEmpty) {
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 16.0),
+                              child: Center(
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[100],
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text(
+                                    'No more deals available',
+                                    style: TextStyle(
+                                      color: Colors.grey[600],
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          }
+                          return const SizedBox.shrink();
                         }
 
-                        // Log impression when deal card is built
+                        if (index >= _deals.length) {
+                          return const SizedBox.shrink();
+                        }
+
                         _logAnalyticsEvent('deal_impression', {
                           'deal_title': _deals[index].title,
                           'deal_price': _deals[index].discountedPrice,
@@ -571,14 +643,6 @@ Widget _buildDealCard(DealCard deal) {
                     ),
                   ),
                 ),
-                if (!_hasNextPage && _deals.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Text(
-                      'No more deals available',
-                      style: TextStyle(color: Colors.grey[600]),
-                    ),
-                  ),
               ],
             ),
       bottomNavigationBar: CustomBottomNavigation(
@@ -594,10 +658,6 @@ Widget _buildDealCard(DealCard deal) {
       ),
     );
   }
-
-  int _calculateDiscount(double originalPrice, double discountedPrice) {
-    return ((originalPrice - discountedPrice) / originalPrice * 100).round();
-  }
 }
 
 class _DealCardSkeleton extends StatelessWidget {
@@ -607,6 +667,7 @@ class _DealCardSkeleton extends StatelessWidget {
       baseColor: Colors.grey[300]!,
       highlightColor: Colors.grey[100]!,
       child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
@@ -623,81 +684,77 @@ class _DealCardSkeleton extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              height: 140,
-              decoration: BoxDecoration(
+              height: 200,
+              width: double.infinity,
+              decoration: const BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.vertical(
                   top: Radius.circular(16),
                 ),
               ),
             ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      height: 16,
-                      width: double.infinity,
-                      color: Colors.white,
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      height: 12,
-                      width: double.infinity,
-                      color: Colors.white,
-                    ),
-                    const SizedBox(height: 4),
-                    Container(
-                      height: 12,
-                      width: 150,
-                      color: Colors.white,
-                    ),
-                    const Spacer(),
-                    Row(
-                      children: [
-                        Container(
-                          height: 18,
-                          width: 60,
-                          color: Colors.white,
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          height: 14,
-                          width: 40,
-                          color: Colors.white,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          flex: 4,
-                          child: Container(
-                            height: 35,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    height: 20,
+                    width: double.infinity,
+                    color: Colors.white,
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    height: 16,
+                    width: double.infinity,
+                    color: Colors.white,
+                  ),
+                  const SizedBox(height: 4),
+                  Container(
+                    height: 16,
+                    width: 200,
+                    color: Colors.white,
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            height: 24,
+                            width: 80,
+                            color: Colors.white,
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          flex: 1,
-                          child: Container(
-                            height: 35,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
+                          const SizedBox(height: 4),
+                          Container(
+                            height: 16,
+                            width: 60,
+                            color: Colors.white,
                           ),
+                        ],
+                      ),
+                      const Spacer(),
+                      Container(
+                        height: 40,
+                        width: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                      ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    height: 48,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -714,6 +771,7 @@ class DealCard {
   final double originalPrice;
   final double discountedPrice;
   final String shopUrl;
+  final DateTime? saleEndDate;
 
   DealCard({
     required this.imageUrl,
@@ -722,5 +780,6 @@ class DealCard {
     required this.originalPrice,
     required this.discountedPrice,
     required this.shopUrl,
+    this.saleEndDate,
   });
 }

@@ -101,8 +101,8 @@ export default function DealsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [sortBy, setSortBy] = useState("createdAt");
-  const [sortOrder, setSortOrder] = useState("desc");
+  const [sortBy, setSortBy] = useState("endDate");
+  const [sortOrder, setSortOrder] = useState("asc");
 
   const { toast } = useToast();
 

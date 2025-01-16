@@ -3,23 +3,14 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io' show Platform;
 import 'firebase_options.dart';
 import './page/home.dart';
 import './page/shops.dart';
 import './page/coupon.dart';
 import './page/deals.dart';
-import './page/onboard.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import './page/no.dart';
-import 'dart:async';  // Add this for StreamSubscription
-
-
-// Single source of truth for preference keys
-class PreferenceKeys {
-  static const String hasCompletedOnboarding = 'has_completed_onboarding';
-}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -41,7 +32,7 @@ Future<void> _initializeFirebase() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  FirebaseAnalytics.instance; // Initialize analytics
+  FirebaseAnalytics.instance;
 }
 
 Future<void> _initializeOneSignal() async { 
@@ -75,7 +66,6 @@ class MyApp extends StatelessWidget {
         '/shops': (context) => ShopScreen(),
         '/coupon': (context) => CouponScreen(),
         '/deals': (context) => const DealsPage(),
-        // Remove onboarding from routes to prevent direct navigation
       },
     );
   }
@@ -90,7 +80,6 @@ class AppEntryPoint extends StatefulWidget {
 
 class _AppEntryPointState extends State<AppEntryPoint> with WidgetsBindingObserver {
   bool _isLoading = true;
-  bool _needsOnboarding = true;
   bool _hasInternet = false;
 
   @override
@@ -98,8 +87,14 @@ class _AppEntryPointState extends State<AppEntryPoint> with WidgetsBindingObserv
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _checkInitialConnectivity();
-    _checkOnboardingStatus();
     _setupConnectivityListener();
+    _initializeApp();
+  }
+
+  void _initializeApp() {
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   @override
@@ -141,64 +136,20 @@ class _AppEntryPointState extends State<AppEntryPoint> with WidgetsBindingObserv
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
-  
-  Future<void> _checkOnboardingStatus() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final hasCompletedOnboarding = prefs.getBool(PreferenceKeys.hasCompletedOnboarding) ?? false;
-      
-      if (mounted) {
-        setState(() {
-          _needsOnboarding = !hasCompletedOnboarding;
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      debugPrint('Error checking onboarding status: $e');
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _needsOnboarding = false;  
-        });
-      }
-    }
-  }
-
-  Future<void> _completeOnboarding() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool(PreferenceKeys.hasCompletedOnboarding, true);
-      
-      if (mounted) {
-        setState(() {
-          _needsOnboarding = false;
-        });
-      }
-    } catch (e) {
-      debugPrint('Error saving onboarding status: $e');
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
-     if (!_hasInternet) {
+    if (!_hasInternet) {
       return NoInternetScreen(
         onRetry: _checkInitialConnectivity,
       );
     }
-   if (_isLoading) {
+
+    if (_isLoading) {
       return const Scaffold(
         body: Center(
           child: CircularProgressIndicator(),
         ),
-      );
-    }
-
-    if (_needsOnboarding) {
-      return OnboardingScreen(
-        onComplete: () {
-          _completeOnboarding();
-        },
       );
     }
 
