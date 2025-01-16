@@ -9,6 +9,7 @@ import 'package:shimmer/shimmer.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_core/firebase_core.dart';
+import '../services/cache.dart';
  
 class CouponScreen extends StatefulWidget {
   @override
@@ -73,38 +74,37 @@ Future<void> initializeFirebase() async {
     return Colors.amber; // Default color
   }
 
+
    Future<void> _loadMoreCoupons() async {
-    if (_isLoading || !_hasNextPage) return;
+  if (_isLoading || !_hasNextPage) return;
 
-    setState(() {
-      _isLoading = true;
-    });
+  setState(() {
+    _isLoading = true;
+  });
 
-    try {
-      final response = await http.get(
-        Uri.parse('https://19ax8udl06.execute-api.ap-south-1.amazonaws.com/coupon?page=$_currentPage&limit=10'),
-      );
+  try {
+    // Check cache first
+    final cachedData = await CouponCacheManager.getCachedCouponData(_currentPage);
+    if (cachedData != null) {
+      final coupons = cachedData['Coupon'] as List;
+      final pagination = cachedData['pagination'];
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final coupons = data['Coupon'] as List;
-        final pagination = data['pagination'];
+      final newCoupons = coupons.map((coupon) => Coupon(
+        title: coupon['title'],
+        merchantName: coupon['merchantName'],
+        merchantLogo: coupon['merchantLogo'],
+        couponCode: coupon['couponCode'],
+        description: coupon['description'],
+        expirationDate: coupon['expirationDate'],
+        discount: coupon['discount'],
+        category: coupon['category'],
+        backgroundColor: _parseColor(coupon['backgroundColor']),
+        accentColor: _parseColor(coupon['accentColor']),
+        clickurl: coupon['clickurl'],
+        terms: List<String>.from(coupon['terms']),
+      )).toList();
 
-        final newCoupons = coupons.map((coupon) => Coupon(
-          title: coupon['title'],
-          merchantName: coupon['merchantName'],
-          merchantLogo: coupon['merchantLogo'],
-          couponCode: coupon['couponCode'],
-          description: coupon['description'],
-          expirationDate: coupon['expirationDate'],
-          discount: coupon['discount'],
-          category: coupon['category'],
-          backgroundColor: _parseColor(coupon['backgroundColor']),
-          accentColor: _parseColor(coupon['accentColor']),
-          clickurl: coupon['clickurl'],
-          terms: List<String>.from(coupon['terms']),
-        )).toList();
-
+      if (mounted) {
         setState(() {
           _coupons.addAll(newCoupons);
           _currentPage++;
@@ -112,22 +112,79 @@ Future<void> initializeFirebase() async {
           _isLoading = false;
           _isInitialLoading = false;
         });
-      } else {
+      }
+      return;
+    }
+
+    // If no valid cache, fetch from API
+    final response = await http.get(
+      Uri.parse('https://19ax8udl06.execute-api.ap-south-1.amazonaws.com/coupon?page=$_currentPage&limit=10'),
+    );
+
+    if (response.statusCode == 200) {
+      // Cache the new data
+      await CouponCacheManager.cacheCouponData(_currentPage, response.body);
+      
+      final data = json.decode(response.body);
+      final coupons = data['Coupon'] as List;
+      final pagination = data['pagination'];
+
+      final newCoupons = coupons.map((coupon) => Coupon(
+        title: coupon['title'],
+        merchantName: coupon['merchantName'],
+        merchantLogo: coupon['merchantLogo'],
+        couponCode: coupon['couponCode'],
+        description: coupon['description'],
+        expirationDate: coupon['expirationDate'],
+        discount: coupon['discount'],
+        category: coupon['category'],
+        backgroundColor: _parseColor(coupon['backgroundColor']),
+        accentColor: _parseColor(coupon['accentColor']),
+        clickurl: coupon['clickurl'],
+        terms: List<String>.from(coupon['terms']),
+      )).toList();
+
+      if (mounted) {
+        setState(() {
+          _coupons.addAll(newCoupons);
+          _currentPage++;
+          _hasNextPage = pagination['hasNextPage'];
+          _isLoading = false;
+          _isInitialLoading = false;
+        });
+      }
+    } else {
+      if (mounted) {
         setState(() {
           _isLoading = false;
           _isInitialLoading = false;
         });
-        throw Exception('Failed to load coupons');
       }
-    } catch (e) {
+      throw Exception('Failed to load coupons');
+    }
+  } catch (e) {
+    if (mounted) {
       setState(() {
         _isLoading = false;
         _isInitialLoading = false;
       });
-      debugPrint('Error fetching coupons: $e');
     }
+    debugPrint('Error fetching coupons: $e');
   }
+}
 
+// Optional: Method to force refresh coupons
+Future<void> refreshCoupons() async {
+  try {
+    await CouponCacheManager.clearCache();
+    _currentPage = 1;
+    _coupons.clear();
+    _hasNextPage = true;
+    await _loadMoreCoupons();
+  } catch (e) {
+    debugPrint('Error refreshing coupons: $e');
+  }
+}
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -233,7 +290,7 @@ class TicketCouponCard extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 20,
-                backgroundColor: Colors.white,
+                backgroundColor: Colors.black,
                 child: ClipOval(
                  child: ClipOval(
   child: Image.network(
@@ -328,7 +385,7 @@ class TicketCouponCard extends StatelessWidget {
       child: Text(
         coupon.discount,
         style: TextStyle(
-          color: Colors.white,
+          color: Colors.black,
           fontWeight: FontWeight.bold,
           fontSize: 14,
         ),
@@ -414,7 +471,7 @@ class TicketCouponCard extends StatelessWidget {
       SnackBar(
         content: Row(
           children: [
-            Icon(Icons.check_circle, color: Colors.white),
+            Icon(Icons.check_circle, color: Colors.blueGrey),
             SizedBox(width: 8),
             Text('Coupon code copied to clipboard!'),
           ],
@@ -509,7 +566,7 @@ class CouponDetailsSheet extends StatelessWidget {
                 child: Text(
                   coupon.discount,
                   style: TextStyle(
-                    color: Colors.white,
+                    color: Colors.black,
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
                   ),
@@ -541,7 +598,7 @@ class CouponDetailsSheet extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 24,
-            backgroundColor: Colors.white,
+            backgroundColor: Colors.amber,
             child: ClipOval(
   child: Image.network(
     coupon.merchantLogo, // External image URL
@@ -727,8 +784,7 @@ class CouponDetailsSheet extends StatelessWidget {
                   child: Text(
                     '${entry.key + 1}',
                     style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
+                      color: Colors.black, 
                     ),
                   ),
                 ),
@@ -908,7 +964,7 @@ Widget _buildBottomCTA(BuildContext context) {
               width: 6,
               height: 6,
               decoration: BoxDecoration(
-                color: Colors.grey[600],
+                color: Colors.black,
                 shape: BoxShape.circle,
               ),
             ),
@@ -919,7 +975,7 @@ Widget _buildBottomCTA(BuildContext context) {
               term,
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey[700],
+                color: Colors.black,
               ),
             ),
           ),

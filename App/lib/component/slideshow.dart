@@ -3,6 +3,9 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
+import '../util/linkopener.dart';
+import '../services/cache.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Slideshow extends StatefulWidget {
   const Slideshow({super.key});
@@ -38,16 +41,14 @@ class _SlideshowState extends State<Slideshow> {
     super.dispose();
   }
 
-  Future<void> _fetchBanners() async {
-    try {
-      final response = await http.get(
-        Uri.parse('https://19ax8udl06.execute-api.ap-south-1.amazonaws.com/homebanner'),
-      );
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final banners = data['Bannerss'] as List;
-        
+Future<void> _fetchBanners() async {
+  try {
+    // First check cache
+    final cachedData = await BannerCacheManager.getCachedBannerData();
+    if (cachedData != null) {
+      final banners = cachedData['Bannerss'] as List;
+      
+      if (mounted) {
         setState(() {
           _bannerItems = banners.map((banner) => _BannerItem(
             imageUrl: banner['bannerImage'],
@@ -55,18 +56,55 @@ class _SlideshowState extends State<Slideshow> {
           )).toList();
           _isLoading = false;
         });
-
         _startAutoPlay();
-      } else {
-        throw Exception('Failed to load banners');
       }
-    } catch (e) {
-      debugPrint('Error fetching banners: $e');
+      return;
+    }
+
+    // If no valid cache, fetch from API
+    final response = await http.get(
+      Uri.parse('https://19ax8udl06.execute-api.ap-south-1.amazonaws.com/homebanner'),
+    );
+
+    if (response.statusCode == 200) {
+      // Cache the new data
+      await BannerCacheManager.cacheBannerData(response.body);
+      
+      final data = json.decode(response.body);
+      final banners = data['Bannerss'] as List;
+      
+      if (mounted) {
+        setState(() {
+          _bannerItems = banners.map((banner) => _BannerItem(
+            imageUrl: banner['bannerImage'],
+            link: banner['linkForClick'],
+          )).toList();
+          _isLoading = false;
+        });
+        _startAutoPlay();
+      }
+    } else {
+      throw Exception('Failed to load banners');
+    }
+  } catch (e) {
+    debugPrint('Error fetching banners: $e');
+    if (mounted) {
       setState(() {
         _isLoading = false;
       });
     }
   }
+}
+
+// Method to force refresh banners
+Future<void> refreshBanners() async {
+  try {
+    await BannerCacheManager.clearCache(); // Using the new clearCache method
+    await _fetchBanners();
+  } catch (e) {
+    debugPrint('Error refreshing banners: $e');
+  }
+}
 
   void _startAutoPlay() {
     _timer = Timer.periodic(_autoPlayDuration, (_) {
@@ -80,17 +118,7 @@ class _SlideshowState extends State<Slideshow> {
       );
     });
   }
-
-  Future<void> _launchURL(String url) async {
-    try {
-      final uri = Uri.parse(url);
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      }
-    } catch (e) {
-      debugPrint('Error launching URL: $e');
-    }
-  }
+  
 
   @override
   Widget build(BuildContext context) {
@@ -141,7 +169,7 @@ class _SlideshowState extends State<Slideshow> {
               itemBuilder: (context, index) {
                 final item = _bannerItems[index];
                 return GestureDetector(
-                  onTap: () => _launchURL(item.link),
+                  onTap: () => openUrl(item.link),
                   child: Container(
                     width: MediaQuery.of(context).size.width,
                     color: Colors.white, // Background color

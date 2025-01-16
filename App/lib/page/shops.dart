@@ -8,6 +8,7 @@ import '../component/sidebar.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_core/firebase_core.dart';
+import '../services/cache.dart';
 
 // Models
 class Shop {
@@ -116,57 +117,134 @@ Future<void> initializeFirebase() async {
     }
   }
 
-  Future<void> _fetchCategories() async {
-    try {
-      final response = await http.get(
-        Uri.parse('https://19ax8udl06.execute-api.ap-south-1.amazonaws.com/category'),
-      );
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final categories = data['Category'] as List;
-
+Future<void> _fetchCategories() async {
+  try {
+    // Check cache first
+    final cachedData = await CategoryCacheManager.getCachedCategories();
+    if (cachedData != null) {
+      final categories = cachedData['Category'] as List;
+      
+      if (mounted) {
         setState(() {
+          _categories.clear(); // Clear existing categories
           _categories.add(Category(id: 'all', title: 'All'));
           _categories.addAll(
             categories.map((cat) => Category.fromJson(cat)).toList(),
           );
         });
       }
-    } catch (e) {
-      debugPrint('Error fetching categories: $e');
+      return;
     }
+
+    // If no valid cache, fetch from API
+    final response = await http.get(
+      Uri.parse('https://19ax8udl06.execute-api.ap-south-1.amazonaws.com/category'),
+    );
+
+    if (response.statusCode == 200) {
+      // Cache the new data
+      await CategoryCacheManager.cacheCategories(response.body);
+      
+      final data = json.decode(response.body);
+      final categories = data['Category'] as List;
+
+      if (mounted) {
+        setState(() {
+          _categories.clear(); // Clear existing categories
+          _categories.add(Category(id: 'all', title: 'All'));
+          _categories.addAll(
+            categories.map((cat) => Category.fromJson(cat)).toList(),
+          );
+        });
+      }
+    } else {
+      throw Exception('Failed to load categories');
+    }
+  } catch (e) {
+    debugPrint('Error fetching categories: $e');
   }
+}
+
+// Optional: Method to force refresh categories
+Future<void> refreshCategories() async {
+  try {
+    await CategoryCacheManager.clearCache();
+    await _fetchCategories();
+  } catch (e) {
+    debugPrint('Error refreshing categories: $e');
+  }
+}
 
   Future<void> _loadMoreShops() async {
-    if (_isLoadingMore || !_hasNextPage) return;
+  if (_isLoadingMore || !_hasNextPage) return;
 
-    setState(() => _isLoadingMore = true);
+  setState(() => _isLoadingMore = true);
 
-    try {
-      final response = await http.get(
-        Uri.parse('https://19ax8udl06.execute-api.ap-south-1.amazonaws.com/getshop?page=$_currentPage'),
-      );
+  try {
+    // Check cache first
+    final cachedData = await ShopCacheManager.getCachedShopData(_currentPage);
+    if (cachedData != null) {
+      final shops = cachedData['Shop'] as List;
+      final pagination = cachedData['pagination'];
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final shops = data['Shop'] as List;
-        final pagination = data['pagination'];
-
+      if (mounted) {
         setState(() {
           _shops.addAll(shops.map((shop) => Shop.fromJson(shop)));
           _currentPage++;
           _hasNextPage = pagination['hasNextPage'] ?? false;
           _isLoadingMore = false;
         });
-      } else {
+      }
+      return;
+    }
+
+    // If no valid cache, fetch from API
+    final response = await http.get(
+      Uri.parse('https://19ax8udl06.execute-api.ap-south-1.amazonaws.com/getshop?page=$_currentPage'),
+    );
+
+    if (response.statusCode == 200) {
+      // Cache the new data
+      await ShopCacheManager.cacheShopData(_currentPage, response.body);
+      
+      final data = json.decode(response.body);
+      final shops = data['Shop'] as List;
+      final pagination = data['pagination'];
+
+      if (mounted) {
+        setState(() {
+          _shops.addAll(shops.map((shop) => Shop.fromJson(shop)));
+          _currentPage++;
+          _hasNextPage = pagination['hasNextPage'] ?? false;
+          _isLoadingMore = false;
+        });
+      }
+    } else {
+      if (mounted) {
         setState(() => _isLoadingMore = false);
       }
-    } catch (e) {
-      setState(() => _isLoadingMore = false);
-      debugPrint('Error fetching shops: $e');
+      throw Exception('Failed to load shops');
     }
+  } catch (e) {
+    if (mounted) {
+      setState(() => _isLoadingMore = false);
+    }
+    debugPrint('Error fetching shops: $e');
   }
+}
+
+// Optional: Method to force refresh shops
+Future<void> refreshShops() async {
+  try {
+    await ShopCacheManager.clearCache();
+    _currentPage = 1;
+    _shops.clear();
+    _hasNextPage = true;
+    await _loadMoreShops();
+  } catch (e) {
+    debugPrint('Error refreshing shops: $e');
+  }
+}
 
   List<Shop> _getFilteredShops() {
     if (_selectedCategory == 'All') return _shops;

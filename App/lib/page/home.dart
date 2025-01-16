@@ -13,6 +13,7 @@ import '../component/sidebar.dart';
 import '../component/skelton.dart';  
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_core/firebase_core.dart';
+import '../services/cache.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -53,33 +54,50 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> fetchHomeData() async {
-    try {
-      final response = await http.get(
-        Uri.parse('https://19ax8udl06.execute-api.ap-south-1.amazonaws.com/home'),
-      );
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (mounted) {
-          setState(() {
-            _components = data['components'];
-            _isLoading = false;
-            _isError = false;
-          });
-        }
-      } else {
-        throw Exception('Failed to load home data');
-      }
-    } catch (e) {
-      debugPrint('Error fetching home data: $e');
+  try {
+    // First try to get cached data
+    final cachedData = await CacheManager.getCachedHomeData();
+    if (cachedData != null) {
       if (mounted) {
         setState(() {
+          _components = cachedData['components'];
           _isLoading = false;
-          _isError = true;
+          _isError = false;
         });
       }
+      return;
+    }
+
+    // If no valid cache, fetch from API
+    final response = await http.get(
+      Uri.parse('https://19ax8udl06.execute-api.ap-south-1.amazonaws.com/home'),
+    );
+
+    if (response.statusCode == 200) {
+      // Cache the new data
+      await CacheManager.cacheHomeData(response.body);
+      
+      final data = json.decode(response.body);
+      if (mounted) {
+        setState(() {
+          _components = data['components'];
+          _isLoading = false;
+          _isError = false;
+        });
+      }
+    } else {
+      throw Exception('Failed to load home data');
+    }
+  } catch (e) {
+    debugPrint('Error fetching home data: $e');
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+        _isError = true;
+      });
     }
   }
+}
 
   Widget _buildComponent(Map<String, dynamic> component) {
     switch (component['type']) {

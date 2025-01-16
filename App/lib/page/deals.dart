@@ -9,6 +9,7 @@ import 'package:shimmer/shimmer.dart';
 import '../component/bottom.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_core/firebase_core.dart';
+import '../services/cache.dart';
  
 class DealsPage extends StatefulWidget {
   const DealsPage({super.key});
@@ -66,32 +67,30 @@ Future<void> initializeFirebase() async {
     }
   }
 
-  Future<void> _loadMoreDeals() async {
-    if (_isLoading || !_hasNextPage) return;
+ Future<void> _loadMoreDeals() async {
+  if (_isLoading || !_hasNextPage) return;
 
-    setState(() {
-      _isLoading = true;
-    });
+  setState(() {
+    _isLoading = true;
+  });
 
-    try {
-      final response = await http.get(
-        Uri.parse('https://19ax8udl06.execute-api.ap-south-1.amazonaws.com/deals?page=$_currentPage&limit=10'),
-      );
+  try {
+    // Check cache first
+    final cachedData = await DealsCacheManager.getCachedDealsData(_currentPage);
+    if (cachedData != null) {
+      final deals = cachedData['Deal'] as List;
+      final pagination = cachedData['pagination'];
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final deals = data['Deal'] as List;
-        final pagination = data['pagination'];
+      final newDeals = deals.map((deal) => DealCard(
+        imageUrl: deal['imageUrl'],
+        title: deal['title'],
+        subtitle: deal['subtitle'],
+        originalPrice: deal['originalPrice'].toDouble(),
+        discountedPrice: deal['discountedPrice'].toDouble(),
+        shopUrl: deal['shopUrl'],
+      )).toList();
 
-        final newDeals = deals.map((deal) => DealCard(
-          imageUrl: deal['imageUrl'],
-          title: deal['title'],
-          subtitle: deal['subtitle'],
-          originalPrice: deal['originalPrice'].toDouble(),
-          discountedPrice: deal['discountedPrice'].toDouble(),
-          shopUrl: deal['shopUrl'],
-        )).toList();
-
+      if (mounted) {
         setState(() {
           _deals.addAll(newDeals);
           _currentPage++;
@@ -99,21 +98,73 @@ Future<void> initializeFirebase() async {
           _isLoading = false;
           _isInitialLoading = false;
         });
-      } else {
+      }
+      return;
+    }
+
+    // If no valid cache, fetch from API
+    final response = await http.get(
+      Uri.parse('https://19ax8udl06.execute-api.ap-south-1.amazonaws.com/deals?page=$_currentPage&limit=10'),
+    );
+
+    if (response.statusCode == 200) {
+      // Cache the new data
+      await DealsCacheManager.cacheDealsData(_currentPage, response.body);
+      
+      final data = json.decode(response.body);
+      final deals = data['Deal'] as List;
+      final pagination = data['pagination'];
+
+      final newDeals = deals.map((deal) => DealCard(
+        imageUrl: deal['imageUrl'],
+        title: deal['title'],
+        subtitle: deal['subtitle'],
+        originalPrice: deal['originalPrice'].toDouble(),
+        discountedPrice: deal['discountedPrice'].toDouble(),
+        shopUrl: deal['shopUrl'],
+      )).toList();
+
+      if (mounted) {
+        setState(() {
+          _deals.addAll(newDeals);
+          _currentPage++;
+          _hasNextPage = pagination['hasNextPage'];
+          _isLoading = false;
+          _isInitialLoading = false;
+        });
+      }
+    } else {
+      if (mounted) {
         setState(() {
           _isLoading = false;
           _isInitialLoading = false;
         });
-        throw Exception('Failed to load deals');
       }
-    } catch (e) {
+      throw Exception('Failed to load deals');
+    }
+  } catch (e) {
+    if (mounted) {
       setState(() {
         _isLoading = false;
         _isInitialLoading = false;
       });
-      debugPrint('Error fetching deals: $e');
     }
+    debugPrint('Error fetching deals: $e');
   }
+}
+
+// Optional: Method to force refresh deals
+Future<void> refreshDeals() async {
+  try {
+    await DealsCacheManager.clearCache();
+    _currentPage = 1;
+    _deals.clear();
+    _hasNextPage = true;
+    await _loadMoreDeals();
+  } catch (e) {
+    debugPrint('Error refreshing deals: $e');
+  }
+}
 
    void _onTabTapped(int index) {
     setState(() {

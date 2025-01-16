@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 
 class Header extends StatelessWidget implements PreferredSizeWidget {
   const Header({super.key});
 
+
+void _shareApp() {
+    Share.share(
+      'Check out EveryDukan for amazing deals and offers!\nhttps://play.google.com/store/apps/details?id=com.everydukan',
+      subject: 'EveryDukan - Your Deal Discovery App',
+    );
+  }
   @override
   Widget build(BuildContext context) {
     return AppBar(
@@ -25,10 +33,9 @@ class Header extends StatelessWidget implements PreferredSizeWidget {
       ),
       actions: [
         IconButton(
-          icon: const Icon(Icons.notifications, color: Colors.black), // Notification bell icon
-          onPressed: () {
-            // Add your notification functionality here
-          },
+          icon: const Icon(Icons.share_rounded, color: Colors.black),
+          onPressed: _shareApp,
+          tooltip: 'Share App',
         )
       ],
     );
