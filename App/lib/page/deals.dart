@@ -487,16 +487,52 @@ class _DealCardSkeleton extends StatelessWidget {
     return ((originalPrice - discountedPrice) / originalPrice * 100).round();
   }
 
-  Future<void> _launchURL(String url) async {
+  Future<void> _launchURL(String url) async { 
+  try {
+    // Clean and format URL
+    String cleanUrl = url.trim();
+    if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
+      cleanUrl = 'https://$cleanUrl';
+    }
+    print('Formatted URL: $cleanUrl');
+
+    // Parse and validate URL
+    final uri = Uri.parse(cleanUrl);
+    
+    // Try Chrome first
     try {
-      final uri = Uri.parse(url);
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      final launched = await launchUrl(
+        uri,
+        mode: LaunchMode.externalNonBrowserApplication,
+      );
+      
+      if (launched) {
+        print('Successfully launched in Chrome');
+        return;
+      } else {
+        print('Chrome launch unsuccessful, trying alternative method');
       }
     } catch (e) {
-      debugPrint('Error launching URL: $e');
+      print('Chrome launch error: $e');
     }
+
+    // If Chrome fails, try universal URL launch
+    final universalLaunch = await launchUrl(
+      uri,
+      mode: LaunchMode.platformDefault,
+    );
+    
+    if (universalLaunch) {
+      print('Successfully launched in default browser');
+    } else {
+      throw 'Could not launch $cleanUrl';
+    }
+  } catch (e) {
+    print('Final URL launch error: $e');
+    // Here you might want to show a snackbar or alert to the user
+    rethrow; // Rethrow to let the calling method handle UI feedback
   }
+}
 
   Future<void> _shareDeal(DealCard deal) async {
     final shareText = '${deal.title}\n${deal.subtitle}\nShop now: ${deal.shopUrl}';

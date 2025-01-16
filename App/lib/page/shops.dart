@@ -333,15 +333,35 @@ Future<void> initializeFirebase() async {
   }
 
   Future<void> _launchUrl(String url) async {
+  try {
+    // Ensure URL has a protocol
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      url = 'https://$url';
+    }
+
+    final uri = Uri.parse(url);
+    await launchUrl(
+      uri,
+      mode: LaunchMode.externalNonBrowserApplication,
+      webViewConfiguration: const WebViewConfiguration(
+        enableJavaScript: true,
+        enableDomStorage: true,
+      ),
+    );
+  } catch (e) {
+    debugPrint('Error launching URL: $e');
+    // Try fallback to default browser if Chrome fails
     try {
       final uri = Uri.parse(url);
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      }
+      await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
     } catch (e) {
-      debugPrint('Error launching URL: $e');
+      debugPrint('Error launching URL in default browser: $e');
     }
   }
+}
 
   @override
   Widget build(BuildContext context) {
