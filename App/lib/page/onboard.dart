@@ -1,34 +1,32 @@
 import 'package:flutter/material.dart';
-import 'package:lottie/lottie.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
- import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class OnboardingScreen extends StatefulWidget {
-  const OnboardingScreen({super.key});
+  final VoidCallback? onComplete;
+
+  const OnboardingScreen({
+    super.key,
+    this.onComplete,
+  });
 
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
 }
+
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
   final TextEditingController _nameController = TextEditingController();
   bool _isLastPage = false;
   int _currentPage = 0;
-  
   String _selectedGender = '';
   
   final Set<String> _selectedCategories = {
-    'Fashion',
-    'Beauty',
-    'Food',
-    'Electronics',
-    'Health',
-    'Home',
-    'Baby Care'
+    'Fashion', 'Beauty', 'Food', 'Electronics', 'Health', 'Home', 'Baby Care'
   };
   
   final List<CategoryData> _categories = [
@@ -43,32 +41,45 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Container(
-          padding: const EdgeInsets.only(bottom: 80),
-          child: PageView(
-            controller: _pageController,
-            physics: const NeverScrollableScrollPhysics(),
-            onPageChanged: (index) {
-              setState(() {
-                _currentPage = index;
-                _isLastPage = index == 3;
-              });
-            },
-            children: [
-              _buildWelcomePage(),
-              _buildNameInputPage(),
-              _buildGenderSelectionPage(),
-              _buildCategorySelectionPage(),
-            ],
+    return WillPopScope(
+      onWillPop: () async {
+        // Allow back navigation but don't force onboarding completion
+        if (_currentPage > 0) {
+          _pageController.previousPage(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+          );
+          return false;
+        }
+        return true;
+      },
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: SafeArea(
+          child: Container(
+            padding: const EdgeInsets.only(bottom: 80),
+            child: PageView(
+              controller: _pageController,
+              physics: const NeverScrollableScrollPhysics(),
+              onPageChanged: (index) {
+                setState(() {
+                  _currentPage = index;
+                  _isLastPage = index == 3;
+                });
+              },
+              children: [
+                _buildWelcomePage(),
+                _buildNameInputPage(),
+                _buildGenderSelectionPage(),
+                _buildCategorySelectionPage(),
+              ],
+            ),
           ),
         ),
+        bottomSheet: _isLastPage
+            ? _buildGetStartedButton()
+            : _buildNavigationBar(),
       ),
-      bottomSheet: _isLastPage
-          ? _buildGetStartedButton()
-          : _buildNavigationBar(),
     );
   }
 
@@ -157,51 +168,127 @@ bool _isNameValid() {
 }
 
 // Update the navigation bar's next button logic
-Widget _buildNavigationBarOld() {
-  final bool canProceed = _currentPage != 1 || _isNameValid();
-  
-  return Container(
-    padding: const EdgeInsets.symmetric(horizontal: 20),
-    height: 80,
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        SmoothPageIndicator(
-          controller: _pageController,
-          count: 4,
-          effect: ExpandingDotsEffect(
-            dotColor: Colors.grey.shade300,
-            activeDotColor: Theme.of(context).primaryColor,
-          ),
-        ),
-        TextButton(
-          onPressed: canProceed ? () {
-            _pageController.nextPage(
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeInOut,
-            );
-          } : null,
-          style: TextButton.styleFrom(
-            backgroundColor: canProceed 
-              ? Theme.of(context).primaryColor 
-              : Colors.grey.shade300,
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
+ Widget _buildNavigationBar() {
+    final bool canProceed = _currentPage != 1 || _isNameValid();
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      height: 80,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          TextButton(
+            onPressed: () {
+              // Skip onboarding and go to home
+              _handleSkipOnboarding();
+            },
+            child: Text(
+              'SKIP',
+              style: TextStyle(
+                color: Colors.grey.shade600,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
-          child: Text(
-            'NEXT',
-            style: TextStyle(
-              color: canProceed ? Colors.white : Colors.grey.shade600,
-              fontWeight: FontWeight.bold,
+          SmoothPageIndicator(
+            controller: _pageController,
+            count: 4,
+            effect: ExpandingDotsEffect(
+              dotColor: Colors.grey.shade300,
+              activeDotColor: Theme.of(context).primaryColor,
             ),
           ),
-        ),
-      ],
-    ),
-  );
-}
+          TextButton(
+            onPressed: canProceed ? () => _handleNext() : null,
+            style: TextButton.styleFrom(
+              backgroundColor: canProceed 
+                ? Theme.of(context).primaryColor 
+                : Colors.grey.shade300,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: Text(
+              'NEXT',
+              style: TextStyle(
+                color: canProceed ? Colors.white : Colors.grey.shade600,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+void _handleNext() {
+    if (_currentPage == 1 && !_isNameValid()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a valid name')),
+      );
+      return;
+    }
+
+    _pageController.nextPage(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+  }
+
+Future<void> _handleSkipOnboarding() async {
+    try {
+      // Get device token
+      final deviceState = await OneSignal.User.pushSubscription;
+      final fcmToken = deviceState.token ?? '';
+
+      // Prepare data with default values
+      final name = _nameController.text.trim().isEmpty ? "Skip" : _nameController.text.trim();
+      final gender = _selectedGender.isEmpty ? "skip" : _selectedGender.toLowerCase();
+      final preferences = _selectedCategories.isEmpty ? 
+          {'Fashion', 'Beauty', 'Food', 'Electronics', 'Health', 'Home', 'Baby Care'} : 
+          _selectedCategories;
+
+      // Update OneSignal tags
+      await OneSignal.User.addTags({
+        'name': name,
+        'gender': gender,
+        'preferences': CategoryCode.generateCode(preferences)
+      });
+
+      // Make API call with default values
+      await http.post(
+        Uri.parse('${ApiService.baseUrl}/user/add'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'name': name,
+          'preferences': preferences.toList(),
+          'gender': gender,
+          'fcmToken': fcmToken,
+        }),
+      );
+
+      // Mark onboarding as completed
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('has_completed_onboarding', true);
+      
+      // Trigger completion callback if provided
+      if (widget.onComplete != null) {
+        widget.onComplete!();
+      }
+      
+      if (mounted) {
+        Navigator.of(context).pushReplacementNamed('/home');
+      }
+    } catch (e) {
+      debugPrint('Error during skip onboarding: $e');
+      // Still proceed to home screen even if API/preferences fails
+      if (mounted) {
+        Navigator.of(context).pushReplacementNamed('/home');
+      }
+    }
+  }
+
 
   Widget _buildWelcomePageWithLottie() {
     return Padding(
@@ -253,60 +340,6 @@ Widget _buildNavigationBarOld() {
                   ),
                 ),
               ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNavigationBar() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      height: 80,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          SmoothPageIndicator(
-            controller: _pageController,
-            count: 4,
-            effect: ExpandingDotsEffect(
-              dotColor: Colors.grey.shade300,
-              activeDotColor: Theme.of(context).primaryColor,
-            ),
-          ),
-          TextButton(
-            onPressed: () {
-              if (_currentPage == 1 && _nameController.text.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Please enter your name')),
-                );
-                return;
-              }
-              if (_currentPage == 2 && _selectedGender.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Please select your gender')),
-                );
-                return;
-              }
-              _pageController.nextPage(
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeInOut,
-              );
-            },
-            style: TextButton.styleFrom(
-              backgroundColor: Theme.of(context).primaryColor,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: Text(
-              'NEXT',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
             ),
           ),
         ],
@@ -558,42 +591,61 @@ Widget _buildNavigationBarOld() {
     return Container(
       padding: const EdgeInsets.all(20),
       width: double.infinity,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -5),
+      child: Row(
+        children: [
+          TextButton(
+            onPressed: _handleSkipOnboarding,
+            child: Text(
+              'SKIP',
+              style: TextStyle(
+                color: Colors.grey.shade600,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          Expanded(
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 15),
+                backgroundColor: Theme.of(context).primaryColor,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              onPressed: () => _completeOnboarding(),
+              child: const Text(
+                'Get Started',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ),
           ),
         ],
       ),
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 15),
-          backgroundColor: Theme.of(context).primaryColor,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          elevation: 0,
-        ),
-        onPressed: () async {
-          await _savePreferences();
-          if (mounted) {
-            Navigator.of(context).pushReplacementNamed('/home');
-          }
-        },
-        child: const Text(
-          'Get Started',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
-          ),
-        ),
-      ),
     );
+  }
+
+Future<void> _completeOnboarding() async {
+    try {
+      await _savePreferences();
+      
+      if (widget.onComplete != null) {
+        widget.onComplete!();
+      }
+
+      if (mounted) {
+        Navigator.of(context).pushReplacementNamed('/home');
+      }
+    } catch (e) {
+      debugPrint('Error completing onboarding: $e');
+      // Still proceed to home screen even if saving preferences fails
+      if (mounted) {
+        Navigator.of(context).pushReplacementNamed('/home');
+      }
+    }
   }
 
   void _updateOneSignalTags() {
@@ -606,56 +658,39 @@ Widget _buildNavigationBarOld() {
   }
 
 Future<void> _savePreferences() async {
-  try {
-    final deviceState = await OneSignal.User.pushSubscription;
-    final fcmToken = deviceState.token ?? '';
+    try {
+      final deviceState = await OneSignal.User.pushSubscription;
+      final fcmToken = deviceState.token ?? '';
 
-    // First update OneSignal tags
-    await OneSignal.User.addTags({
-      'name': _nameController.text.trim(),
-      'gender': _selectedGender.toLowerCase(),
-      'preferences': CategoryCode.generateCode(_selectedCategories)
-    });
-
-    // Call API to save user data
-    final response = await http.post(
-      Uri.parse('${ApiService.baseUrl}/user/add'),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: json.encode({
+      // Update OneSignal tags
+      await OneSignal.User.addTags({
         'name': _nameController.text.trim(),
-        'preferences': _selectedCategories.toList(),
         'gender': _selectedGender.toLowerCase(),
-        'fcmToken': fcmToken,
-      }),
-    );
+        'preferences': CategoryCode.generateCode(_selectedCategories)
+      });
 
-    if (response.statusCode != 201) {
-      throw Exception('Failed to save user data');
-    }
-
-    // Set first_time to false in SharedPreferences
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('is_first_time', false);
-
-    debugPrint('First time flag set to false');
-
-    if (mounted) {
-      Navigator.of(context).pushReplacementNamed('/home');
-    }
-  } catch (e) {
-    debugPrint('Error saving preferences: $e');
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Failed to save preferences. Please try again.'),
-          backgroundColor: Colors.red,
-        ),
+      // Save to API
+      await http.post(
+        Uri.parse('${ApiService.baseUrl}/user/add'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'name': _nameController.text.trim(),
+          'preferences': _selectedCategories.toList(),
+          'gender': _selectedGender.toLowerCase(),
+          'fcmToken': fcmToken,
+        }),
       );
+
+      // Mark onboarding as completed
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('has_completed_onboarding', true);
+    } catch (e) {
+      debugPrint('Error saving preferences: $e');
+      // Let the error propagate to be handled by the caller
+      throw e;
     }
   }
-}
+
 
 
   @override

@@ -12,20 +12,22 @@ import './page/coupon.dart';
 import './page/deals.dart';
 import './page/onboard.dart';
 
+// Single source of truth for preference keys
+class PreferenceKeys {
+  static const String hasCompletedOnboarding = 'has_completed_onboarding';
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
-  runApp(MyApp());
+  await initializeApp();
+  runApp(const MyApp());
 }
 
 Future<void> initializeApp() async {
   try {
-    WidgetsFlutterBinding.ensureInitialized();
-    
     await _initializeFirebase();
     await _initializeOneSignal();
     await _initializeNotifications();
-    
   } catch (e) {
     debugPrint('Error initializing app: $e');
   }
@@ -35,28 +37,19 @@ Future<void> _initializeFirebase() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  
-  // Initialize Firebase Analytics
-  final FirebaseAnalytics analytics = FirebaseAnalytics.instance;
-  // You can add custom analytics initialization here if needed
+  FirebaseAnalytics.instance; // Initialize analytics
 }
 
 Future<void> _initializeOneSignal() async { 
   OneSignal.Debug.setLogLevel(OSLogLevel.verbose);
   OneSignal.initialize("a9a9e59d-c91d-487a-8121-0b231203406b"); 
   await OneSignal.Notifications.requestPermission(true);  
-  final tags = await OneSignal.User.getTags();
-  debugPrint('OneSignal tags: $tags');
 }
 
 Future<void> _initializeNotifications() async {
   if (Platform.isIOS) {
     final apnsToken = await FirebaseMessaging.instance.getAPNSToken();
-    if (apnsToken != null) {
-      debugPrint('Got APNS token: $apnsToken');
-    } else {
-      debugPrint('APNS token not available yet');
-    }
+    debugPrint(apnsToken != null ? 'Got APNS token: $apnsToken' : 'APNS token not available yet');
   }
 }
 
@@ -75,10 +68,10 @@ class MyApp extends StatelessWidget {
       home: const AppEntryPoint(),
       routes: {
         '/home': (context) => const HomePage(),
-        '/shops': (context) =>  ShopScreen(),
+        '/shops': (context) => ShopScreen(),
         '/coupon': (context) => CouponScreen(),
         '/deals': (context) => const DealsPage(),
-        '/onboard': (context) => const OnboardingScreen(),
+        // Remove onboarding from routes to prevent direct navigation
       },
     );
   }
@@ -93,33 +86,48 @@ class AppEntryPoint extends StatefulWidget {
 
 class _AppEntryPointState extends State<AppEntryPoint> {
   bool _isLoading = true;
-  bool _isFirstTime = true;
+  bool _needsOnboarding = true;
 
   @override
   void initState() {
     super.initState();
-    _checkFirstTime();
+    _checkOnboardingStatus();
   }
 
-  Future<void> _checkFirstTime() async {
+  Future<void> _checkOnboardingStatus() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final isFirstTime = prefs.getBool('is_first_time') ?? true;
+      final hasCompletedOnboarding = prefs.getBool(PreferenceKeys.hasCompletedOnboarding) ?? false;
       
       if (mounted) {
         setState(() {
-          _isFirstTime = isFirstTime;
+          _needsOnboarding = !hasCompletedOnboarding;
           _isLoading = false;
         });
       }
     } catch (e) {
-      debugPrint('Error checking first time status: $e');
+      debugPrint('Error checking onboarding status: $e');
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _isFirstTime = true; // Default to showing onboarding if there's an error
+          _needsOnboarding = true; // Default to showing onboarding if there's an error
         });
       }
+    }
+  }
+
+  Future<void> _completeOnboarding() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(PreferenceKeys.hasCompletedOnboarding, true);
+      
+      if (mounted) {
+        setState(() {
+          _needsOnboarding = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error saving onboarding status: $e');
     }
   }
 
@@ -133,6 +141,14 @@ class _AppEntryPointState extends State<AppEntryPoint> {
       );
     }
 
-    return _isFirstTime ? const OnboardingScreen() : const HomePage();
+    if (_needsOnboarding) {
+      return OnboardingScreen(
+        onComplete: () {
+          _completeOnboarding();
+        },
+      );
+    }
+
+    return const HomePage();
   }
 }
