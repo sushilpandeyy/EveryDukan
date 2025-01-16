@@ -749,32 +749,99 @@ class CouponDetailsSheet extends StatelessWidget {
 Widget _buildBottomCTA(BuildContext context) {
   Future<void> _copyCodeAndOpenUrl() async {
     try {
-      // Copy the coupon code
-      _copyCouponCode(context);
+      // First copy the code
+      await Clipboard.setData(ClipboardData(text: coupon.couponCode));
+      
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: const [
+              Icon(Icons.check_circle, color: Colors.white),
+              SizedBox(width: 8),
+              Text('Code copied! Opening Chrome...'),
+            ],
+          ),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
 
-      // Open the URL if available
+      // Handle URL opening in Chrome
       if (coupon.clickurl != null && coupon.clickurl!.isNotEmpty) {
-        final url = Uri.parse(coupon.clickurl!);
+        String urlString = coupon.clickurl!;
+        
+        // Add https if not present
+        if (!urlString.startsWith('http://') && !urlString.startsWith('https://')) {
+          urlString = 'https://$urlString';
+        }
 
-        if (await canLaunchUrl(url)) {
-          await launchUrl(
-            url,
-            mode: LaunchMode.externalApplication,
+        // Create Chrome Intent URL
+        final chromeUrl = Uri.parse(urlString);
+        
+        if (!context.mounted) return;
+        
+        try {
+          // Try opening in Chrome first
+          final chromeLaunchSuccess = await launchUrl(
+            chromeUrl,
+            mode: LaunchMode.externalNonBrowserApplication,
+            webViewConfiguration: const WebViewConfiguration(
+              enableJavaScript: true,
+              enableDomStorage: true,
+            ),
           );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Could not open the URL')),
-          );
+
+          if (!chromeLaunchSuccess && context.mounted) {
+            // If Chrome launch fails, try default browser as fallback
+            final fallbackSuccess = await launchUrl(
+              chromeUrl,
+              mode: LaunchMode.externalApplication,
+            );
+            
+            if (!fallbackSuccess && context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Could not open the browser'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          }
+        } catch (e) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Could not open Chrome. Opening in default browser...'),
+                backgroundColor: Colors.orange,
+              ),
+            );
+            // Try default browser as fallback
+            await launchUrl(
+              chromeUrl,
+              mode: LaunchMode.externalApplication,
+            );
+          }
         }
       } else {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('URL not available')),
+          SnackBar(
+            content: Text('Store URL not available'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('An error occurred')),
-      );
+      debugPrint('URL launch error: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to open store website'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
