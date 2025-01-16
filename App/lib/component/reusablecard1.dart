@@ -35,7 +35,7 @@ class ReusableBannerComponent extends StatelessWidget {
                 GestureDetector(
                   onTap: onViewAll,
                   child: const Text(
-                    'View All',
+                    ' ',
                     style: TextStyle(
                       fontSize: 16,
                       color: Colors.amber,

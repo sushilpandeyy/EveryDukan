@@ -246,8 +246,11 @@ class _DealsPageState extends State<DealsPage> {
       'discount_percentage': _calculateDiscount(deal.originalPrice, deal.discountedPrice),
     });
     
-    final shareText = '${deal.title}\n${deal.subtitle}\nShop now: ${deal.shopUrl}';
-    await Share.share(shareText);
+    final shareText = "🔥 *Deal Alert via EveryDukan!* 🔥\n\n${deal.title}\n${deal.subtitle}\n\n🛒 *Shop now:* ${deal.shopUrl}\n\n*Brought to you by EveryDukan – India’s ultimate deal discovery app!* 🎉\n\n [https://play.google.com/store/apps/details?id=com.everydukan](https://play.google.com/store/apps/details?id=com.everydukan)\n\n#EveryDukan #DealSealed";
+    await  Share.share(
+      shareText,
+        subject: 'EveryDukan - Your Deal Discovery App'
+);
   }
 
   Future<void> _launchURL(String url) async {
@@ -299,183 +302,212 @@ class _DealsPageState extends State<DealsPage> {
     }
   }
 
-  Widget _buildDealCard(DealCard deal) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.15),
-            spreadRadius: 2,
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Stack(
-            children: [
-              ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                child: Container(
-                  height: 140,
-                  width: double.infinity,
-                  color: Colors.grey[100],
-                  child: Image.network(
-                    deal.imageUrl,
-                    fit: BoxFit.contain,
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return Center(
-                        child: CircularProgressIndicator(
-                          value: loadingProgress.expectedTotalBytes != null
-                              ? loadingProgress.cumulativeBytesLoaded /
-                                  loadingProgress.expectedTotalBytes!
-                              : null,
-                          strokeWidth: 2,
-                        ),
-                      );
-                    },
-                    errorBuilder: (context, error, stackTrace) {
-                      return const Center(
-                        child: Icon(Icons.error_outline, 
-                          size: 32,
-                          color: Colors.grey,
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ),
-              Positioned(
-                top: 8,
-                right: 8,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.red[600],
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    '${_calculateDiscount(deal.originalPrice, deal.discountedPrice)}% OFF',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    deal.title,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    deal.subtitle,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[600],
-                      height: 1.2,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const Spacer(),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        '₹${deal.discountedPrice.toStringAsFixed(0)}',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green[700],
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        '₹${deal.originalPrice.toStringAsFixed(0)}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          decoration: TextDecoration.lineThrough,
-                          color: Colors.grey[500],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        flex: 4,
-                        child: ElevatedButton(
-                          onPressed: () => _handleShopNow(deal),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.amber[700],
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          child: const Text(
-                            'Shop Now',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        flex: 1,
-                        child: Container(
-                          height: 35,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[100],
-                            borderRadius: BorderRadius.circular(8),
-          ),
-          child: IconButton(
-            icon: const Icon(
-              Icons.share_outlined,
-              size: 18,
-              color: Colors.black87,
+
+Widget _buildDealCard(DealCard deal) {
+    return InkWell(
+      onTap: () => _handleShopNow(deal),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.15),
+              spreadRadius: 2,
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
-            onPressed: () => _handleShare(deal),
-            padding: EdgeInsets.zero,
-          ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Stack(
+              children: [
+                Hero(
+                  tag: 'deal_image_${deal.shopUrl}',
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                    child: Container(
+                      height: 140,
+                      width: double.infinity,
+                      color: Colors.grey[100],
+                      child: Image.network(
+                        deal.imageUrl,
+                        fit: BoxFit.contain,
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Center(
+                            child: CircularProgressIndicator(
+                              value: loadingProgress.expectedTotalBytes != null
+                                  ? loadingProgress.cumulativeBytesLoaded /
+                                      loadingProgress.expectedTotalBytes!
+                                  : null,
+                              strokeWidth: 2,
+                              color: Colors.amber[700],
+                            ),
+                          );
+                        },
+                        errorBuilder: (context, error, stackTrace) {
+                          return Center(
+                            child: Icon(
+                              Icons.error_outline,
+                              size: 32,
+                              color: Colors.grey[400],
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.red[600],
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          spreadRadius: 1,
+                          blurRadius: 2,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
+                    ),
+                    child: Text(
+                      '${_calculateDiscount(deal.originalPrice, deal.discountedPrice)}% OFF',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      deal.title,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      deal.subtitle,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[600],
+                        height: 1.2,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const Spacer(),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          '₹${deal.discountedPrice.toStringAsFixed(0)}',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green[700],
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          '₹${deal.originalPrice.toStringAsFixed(0)}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            decoration: TextDecoration.lineThrough,
+                            color: Colors.grey[500],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          flex: 4,
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () => _handleShopNow(deal),
+                              borderRadius: BorderRadius.circular(8),
+                              child: Ink(
+                                height: 35,
+                                decoration: BoxDecoration(
+                                  color: Colors.amber[700],
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Center(
+                                  child: Text(
+                                    'Shop Now',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          flex: 1,
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () => _handleShare(deal),
+                              borderRadius: BorderRadius.circular(8),
+                              child: Ink(
+                                height: 35,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[100],
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Center(
+                                  child: Icon(
+                                    Icons.share_outlined,
+                                    size: 18,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
-    ],
-  ),
-],
-)),
-),
-],
-),
-);
-}
+    );
+  }
+
 
   Widget _buildSkeletonLoading() {
     return GridView.builder(

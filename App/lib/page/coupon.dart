@@ -10,7 +10,8 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_core/firebase_core.dart';
 import '../services/cache.dart';
- 
+import 'package:share_plus/share_plus.dart';
+
 class CouponScreen extends StatefulWidget {
   @override
   _CouponScreenState createState() => _CouponScreenState();
@@ -473,7 +474,7 @@ class TicketCouponCard extends StatelessWidget {
     );
   }
 
-  Widget _buildLowerSection(BuildContext context) {
+Widget _buildLowerSection(BuildContext context) {
     return Container(
       padding: EdgeInsets.all(16),
       child: Row(
@@ -500,7 +501,38 @@ class TicketCouponCard extends StatelessWidget {
             ],
           ),
           Spacer(),
-          _buildCopyButton(context),
+          Row(
+            children: [
+              _buildCopyButton(context),
+              SizedBox(width: 8),
+              Container(
+                height: 40,
+                width: 40,
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: IconButton(
+                  icon: Icon(
+                    Icons.share_outlined,
+                    size: 18,
+                    color: Colors.black87,
+                  ),
+                  onPressed: () async {
+                    final shareText =   "💸 *Save big with ${coupon.merchantName}!* 💸\n\n" +  
+  "🎟️ *Use code:* ${coupon.couponCode}\n" +  
+  "📢 ${coupon.title}\n" +  
+  "⏳ *Valid until:* ${coupon.expirationDate}\n\n" +  
+  "🛍️ *Found this deal on EveryDukan – your deal discovery buddy!* 🎉\n" +  
+  "📲 Download the app: https://play.google.com/store/apps/details?id=com.everydukan\n\n" +  
+  "#EveryDukan #CouponCode #SaveBig";
+                    await Share.share(shareText);
+                  },
+                  padding: EdgeInsets.zero,
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
