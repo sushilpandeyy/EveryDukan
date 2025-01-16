@@ -1,26 +1,58 @@
 [
     {
-        "merged": "com.deals.d2c.app-merged_res-62:/mipmap-xhdpi_ic_launcher.png.flat",
-        "source": "com.deals.d2c.app-main-56:/mipmap-xhdpi/ic_launcher.png"
+        "merged": "/Users/sushilpandey/.gradle/daemon/8.3/com.deals.d2c.app-merged_res-62:/drawable-v21_launch_background.xml.flat",
+        "source": "/Users/sushilpandey/.gradle/daemon/8.3/com.deals.d2c.app-main-56:/drawable-v21/launch_background.xml"
     },
     {
-        "merged": "com.deals.d2c.app-merged_res-62:/mipmap-xxxhdpi_ic_launcher.png.flat",
-        "source": "com.deals.d2c.app-main-56:/mipmap-xxxhdpi/ic_launcher.png"
+        "merged": "/Users/sushilpandey/.gradle/daemon/8.3/com.deals.d2c.app-merged_res-62:/mipmap-xhdpi_ic_launcher1.png.flat",
+        "source": "/Users/sushilpandey/.gradle/daemon/8.3/com.deals.d2c.app-main-56:/mipmap-xhdpi/ic_launcher1.png"
     },
     {
-        "merged": "com.deals.d2c.app-merged_res-62:/mipmap-mdpi_ic_launcher.png.flat",
-        "source": "com.deals.d2c.app-main-56:/mipmap-mdpi/ic_launcher.png"
+        "merged": "/Users/sushilpandey/.gradle/daemon/8.3/com.deals.d2c.app-merged_res-62:/mipmap-hdpi_ic_launcher1.png.flat",
+        "source": "/Users/sushilpandey/.gradle/daemon/8.3/com.deals.d2c.app-main-56:/mipmap-hdpi/ic_launcher1.png"
+    },
+    {
+        "merged": "/Users/sushilpandey/.gradle/daemon/8.3/com.deals.d2c.app-merged_res-62:/mipmap-xxhdpi_ic_launcher1.png.flat",
+        "source": "/Users/sushilpandey/.gradle/daemon/8.3/com.deals.d2c.app-main-56:/mipmap-xxhdpi/ic_launcher1.png"
+    },
+    {
+        "merged": "/Users/sushilpandey/.gradle/daemon/8.3/com.deals.d2c.app-merged_res-62:/mipmap-hdpi_ic_launcher.png.flat",
+        "source": "/Users/sushilpandey/.gradle/daemon/8.3/com.deals.d2c.app-main-56:/mipmap-hdpi/ic_launcher.png"
+    },
+    {
+        "merged": "/Users/sushilpandey/.gradle/daemon/8.3/com.deals.d2c.app-merged_res-62:/mipmap-xxxhdpi_ic_launcher1.png.flat",
+        "source": "/Users/sushilpandey/.gradle/daemon/8.3/com.deals.d2c.app-main-56:/mipmap-xxxhdpi/ic_launcher1.png"
+    },
+    {
+        "merged": "/Users/sushilpandey/.gradle/daemon/8.3/com.deals.d2c.app-merged_res-62:/mipmap-mdpi_ic_launcher1.png.flat",
+        "source": "/Users/sushilpandey/.gradle/daemon/8.3/com.deals.d2c.app-main-56:/mipmap-mdpi/ic_launcher1.png"
+    },
+    {
+        "merged": "/Users/sushilpandey/.gradle/daemon/8.3/com.deals.d2c.app-merged_res-62:/mipmap-xxhdpi_ic_launcher.png.flat",
+        "source": "/Users/sushilpandey/.gradle/daemon/8.3/com.deals.d2c.app-main-56:/mipmap-xxhdpi/ic_launcher.png"
+    },
+    {
+        "merged": "/Users/sushilpandey/.gradle/daemon/8.3/com.deals.d2c.app-merged_res-62:/mipmap-mdpi_ic_launcher.png.flat",
+        "source": "/Users/sushilpandey/.gradle/daemon/8.3/com.deals.d2c.app-main-56:/mipmap-mdpi/ic_launcher.png"
+    },
+    {
+        "merged": "/Users/sushilpandey/.gradle/daemon/8.3/com.deals.d2c.app-merged_res-62:/drawable_splash_logo.png.flat",
+        "source": "/Users/sushilpandey/.gradle/daemon/8.3/com.deals.d2c.app-main-56:/drawable/splash_logo.png"
+    },
+    {
+        "merged": "/Users/sushilpandey/.gradle/daemon/8.3/com.deals.d2c.app-merged_res-62:/mipmap-xxxhdpi_ic_launcher.png.flat",
+        "source": "/Users/sushilpandey/.gradle/daemon/8.3/com.deals.d2c.app-main-56:/mipmap-xxxhdpi/ic_launcher.png"
+    },
+    {
+        "merged": "/Users/sushilpandey/.gradle/daemon/8.3/com.deals.d2c.app-merged_res-62:/mipmap-xhdpi_ic_launcher.png.flat",
+        "source": "/Users/sushilpandey/.gradle/daemon/8.3/com.deals.d2c.app-main-56:/mipmap-xhdpi/ic_launcher.png"
     },
     {
         "merged": "com.deals.d2c.app-merged_res-62:/drawable-v21_launch_background.xml.flat",
         "source": "com.deals.d2c.app-main-56:/drawable-v21/launch_background.xml"
     },
     {
-        "merged": "com.deals.d2c.app-merged_res-62:/mipmap-hdpi_ic_launcher.png.flat",
-        "source": "com.deals.d2c.app-main-56:/mipmap-hdpi/ic_launcher.png"
-    },
-    {
-        "merged": "com.deals.d2c.app-merged_res-62:/mipmap-xxhdpi_ic_launcher.png.flat",
-        "source": "com.deals.d2c.app-main-56:/mipmap-xxhdpi/ic_launcher.png"
+        "merged": "/Users/sushilpandey/.gradle/daemon/8.3/com.deals.d2c.app-merged_res-62:/drawable-v21_splash_logo.png.flat",
+        "source": "/Users/sushilpandey/.gradle/daemon/8.3/com.deals.d2c.app-main-56:/drawable-v21/splash_logo.png"
     }
 ]

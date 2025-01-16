@@ -30,7 +30,6 @@ class _DealsPageState extends State<DealsPage> {
 
 Future<void> initializeFirebase() async {
     try {
-      await Firebase.initializeApp();
       // analytics is already initialized as FirebaseAnalytics.instance
       // Log home page open event
       await analytics?.logEvent(
