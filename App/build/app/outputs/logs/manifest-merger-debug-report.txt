@@ -95,6 +95,7 @@ INJECTED from /Users/sushilpandey/Documents/d2cdeals/App/android/app/src/debug/A
 INJECTED from /Users/sushilpandey/Documents/d2cdeals/App/android/app/src/debug/AndroidManifest.xml:1:1-7:12
 INJECTED from /Users/sushilpandey/Documents/d2cdeals/App/android/app/src/debug/AndroidManifest.xml:1:1-7:12
 MERGED from [:cloud_firestore] /Users/sushilpandey/Documents/d2cdeals/App/build/cloud_firestore/intermediates/merged_manifest/debug/AndroidManifest.xml:2:1-15:12
+MERGED from [:connectivity_plus] /Users/sushilpandey/Documents/d2cdeals/App/build/connectivity_plus/intermediates/merged_manifest/debug/AndroidManifest.xml:2:1-9:12
 MERGED from [:firebase_analytics] /Users/sushilpandey/Documents/d2cdeals/App/build/firebase_analytics/intermediates/merged_manifest/debug/AndroidManifest.xml:2:1-19:12
 MERGED from [:firebase_messaging] /Users/sushilpandey/Documents/d2cdeals/App/build/firebase_messaging/intermediates/merged_manifest/debug/AndroidManifest.xml:2:1-48:12
 MERGED from [:firebase_core] /Users/sushilpandey/Documents/d2cdeals/App/build/firebase_core/intermediates/merged_manifest/debug/AndroidManifest.xml:2:1-15:12
@@ -254,6 +255,8 @@ INJECTED from /Users/sushilpandey/Documents/d2cdeals/App/android/app/src/debug/A
 INJECTED from /Users/sushilpandey/Documents/d2cdeals/App/android/app/src/debug/AndroidManifest.xml
 MERGED from [:cloud_firestore] /Users/sushilpandey/Documents/d2cdeals/App/build/cloud_firestore/intermediates/merged_manifest/debug/AndroidManifest.xml:5:5-44
 MERGED from [:cloud_firestore] /Users/sushilpandey/Documents/d2cdeals/App/build/cloud_firestore/intermediates/merged_manifest/debug/AndroidManifest.xml:5:5-44
+MERGED from [:connectivity_plus] /Users/sushilpandey/Documents/d2cdeals/App/build/connectivity_plus/intermediates/merged_manifest/debug/AndroidManifest.xml:5:5-44
+MERGED from [:connectivity_plus] /Users/sushilpandey/Documents/d2cdeals/App/build/connectivity_plus/intermediates/merged_manifest/debug/AndroidManifest.xml:5:5-44
 MERGED from [:firebase_analytics] /Users/sushilpandey/Documents/d2cdeals/App/build/firebase_analytics/intermediates/merged_manifest/debug/AndroidManifest.xml:5:5-44
 MERGED from [:firebase_analytics] /Users/sushilpandey/Documents/d2cdeals/App/build/firebase_analytics/intermediates/merged_manifest/debug/AndroidManifest.xml:5:5-44
 MERGED from [:firebase_messaging] /Users/sushilpandey/Documents/d2cdeals/App/build/firebase_messaging/intermediates/merged_manifest/debug/AndroidManifest.xml:5:5-44
@@ -509,7 +512,9 @@ ADDED from [:cloud_firestore] /Users/sushilpandey/Documents/d2cdeals/App/build/c
 	android:name
 		ADDED from [:cloud_firestore] /Users/sushilpandey/Documents/d2cdeals/App/build/cloud_firestore/intermediates/merged_manifest/debug/AndroidManifest.xml:10:17-134
 uses-permission#android.permission.ACCESS_NETWORK_STATE
-ADDED from [:firebase_analytics] /Users/sushilpandey/Documents/d2cdeals/App/build/firebase_analytics/intermediates/merged_manifest/debug/AndroidManifest.xml:7:5-79
+ADDED from [:connectivity_plus] /Users/sushilpandey/Documents/d2cdeals/App/build/connectivity_plus/intermediates/merged_manifest/debug/AndroidManifest.xml:7:5-79
+MERGED from [:firebase_analytics] /Users/sushilpandey/Documents/d2cdeals/App/build/firebase_analytics/intermediates/merged_manifest/debug/AndroidManifest.xml:7:5-79
+MERGED from [:firebase_analytics] /Users/sushilpandey/Documents/d2cdeals/App/build/firebase_analytics/intermediates/merged_manifest/debug/AndroidManifest.xml:7:5-79
 MERGED from [:firebase_messaging] /Users/sushilpandey/Documents/d2cdeals/App/build/firebase_messaging/intermediates/merged_manifest/debug/AndroidManifest.xml:9:5-79
 MERGED from [:firebase_messaging] /Users/sushilpandey/Documents/d2cdeals/App/build/firebase_messaging/intermediates/merged_manifest/debug/AndroidManifest.xml:9:5-79
 MERGED from [com.google.firebase:firebase-firestore:25.1.1] /Users/sushilpandey/.gradle/caches/transforms-3/a1f26dab07b22eb69295acda9946574b/transformed/jetified-firebase-firestore-25.1.1/AndroidManifest.xml:10:5-79
@@ -539,7 +544,7 @@ MERGED from [com.google.android.datatransport:transport-runtime:3.1.9] /Users/su
 MERGED from [io.grpc:grpc-android:1.62.2] /Users/sushilpandey/.gradle/caches/transforms-3/902dd3f2592ca74cc42c3800ddc371ad/transformed/jetified-grpc-android-1.62.2/AndroidManifest.xml:7:5-79
 MERGED from [io.grpc:grpc-android:1.62.2] /Users/sushilpandey/.gradle/caches/transforms-3/902dd3f2592ca74cc42c3800ddc371ad/transformed/jetified-grpc-android-1.62.2/AndroidManifest.xml:7:5-79
 	android:name
-		ADDED from [:firebase_analytics] /Users/sushilpandey/Documents/d2cdeals/App/build/firebase_analytics/intermediates/merged_manifest/debug/AndroidManifest.xml:7:22-76
+		ADDED from [:connectivity_plus] /Users/sushilpandey/Documents/d2cdeals/App/build/connectivity_plus/intermediates/merged_manifest/debug/AndroidManifest.xml:7:22-76
 uses-permission#android.permission.WAKE_LOCK
 ADDED from [:firebase_analytics] /Users/sushilpandey/Documents/d2cdeals/App/build/firebase_analytics/intermediates/merged_manifest/debug/AndroidManifest.xml:9:5-68
 MERGED from [:firebase_messaging] /Users/sushilpandey/Documents/d2cdeals/App/build/firebase_messaging/intermediates/merged_manifest/debug/AndroidManifest.xml:8:5-68

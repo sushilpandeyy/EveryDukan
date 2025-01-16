@@ -10,7 +10,6 @@ import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_core/firebase_core.dart';
 import '../services/cache.dart';
 
-// Models
 class Shop {
   final String id;
   final String title;
@@ -68,37 +67,52 @@ class _ShopScreenState extends State<ShopScreen> {
   int _currentPage = 1;
   int _currentIndex = 2;
   String _selectedCategory = 'All';
-   FirebaseAnalytics? analytics = FirebaseAnalytics.instance;
-
-Future<void> initializeFirebase() async {
-    try {
-      await Firebase.initializeApp();
-      // analytics is already initialized as FirebaseAnalytics.instance
-      // Log home page open event
-      await analytics?.logEvent(
-        name: 'Shops_page_open',
-        parameters: {
-          'timestamp': DateTime.now().toIso8601String(),
-        },
-      );
-    } catch (e) {
-      debugPrint('Failed to initialize Firebase Analytics: $e');
-    }
-  } 
+  late final FirebaseAnalytics analytics;
+  
+  static const String EVENT_SHOP_PAGE_VIEW = 'shop_page_view';
+  static const String EVENT_SHOP_CLICK = 'shop_click';
+  static const String EVENT_CATEGORY_SELECT = 'category_select';
+  static const String EVENT_ERROR = 'shop_error';
+  static const String EVENT_LOAD_MORE = 'load_more_shops';
+  static const String EVENT_REFRESH = 'shop_page_refresh';
+  static const String EVENT_URL_LAUNCH = 'shop_url_launch';
+  static const String EVENT_NAVIGATION = 'shop_navigation';
 
   @override
   void initState() {
     super.initState();
+    _initializeAnalytics();
     _initialize();
-    initializeFirebase();
     _scrollController.addListener(_onScroll);
   }
 
+  Future<void> _initializeAnalytics() async {
+    try {
+      await Firebase.initializeApp();
+      analytics = FirebaseAnalytics.instance;
+      await analytics.logScreenView(screenName: 'ShopScreen');
+      await _logEvent(EVENT_SHOP_PAGE_VIEW, {'initial_load': true});
+    } catch (e) {
+      debugPrint('Analytics error: $e');
+    }
+  }
+
+  Future<void> _logEvent(String name, Map<String, dynamic> params) async {
+    try {
+      await analytics.logEvent(
+        name: name,
+        parameters: {
+          'timestamp': DateTime.now().toIso8601String(),
+          ...params,
+        },
+      );
+    } catch (e) {
+      debugPrint('Log event error: $e');
+    }
+  }
+
   Future<void> _initialize() async {
-    await Future.wait([
-      _fetchCategories(),
-      _loadMoreShops(),
-    ]);
+    await Future.wait([_fetchCategories(), _loadMoreShops()]);
     setState(() => _isLoading = false);
   }
 
@@ -109,148 +123,227 @@ Future<void> initializeFirebase() async {
   }
 
   void _onScroll() {
-    if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - 200) {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
       if (_hasNextPage && !_isLoadingMore) {
+        _logEvent(EVENT_LOAD_MORE, {'page': _currentPage});
         _loadMoreShops();
       }
     }
   }
 
-Future<void> _fetchCategories() async {
-  try {
-    // Check cache first
-    final cachedData = await CategoryCacheManager.getCachedCategories();
-    if (cachedData != null) {
-      final categories = cachedData['Category'] as List;
-      
-      if (mounted) {
+  Future<void> _fetchCategories() async {
+    try {
+      final cachedData = await CategoryCacheManager.getCachedCategories();
+      if (cachedData != null) {
+        final categories = cachedData['Category'] as List;
         setState(() {
-          _categories.clear(); // Clear existing categories
+          _categories.clear();
           _categories.add(Category(id: 'all', title: 'All'));
-          _categories.addAll(
-            categories.map((cat) => Category.fromJson(cat)).toList(),
-          );
+          _categories.addAll(categories.map((cat) => Category.fromJson(cat)));
         });
+        await _logEvent('categories_loaded', {'source': 'cache'});
+        return;
       }
-      return;
-    }
 
-    // If no valid cache, fetch from API
-    final response = await http.get(
-      Uri.parse('https://19ax8udl06.execute-api.ap-south-1.amazonaws.com/category'),
-    );
+      final response = await http.get(
+        Uri.parse('https://19ax8udl06.execute-api.ap-south-1.amazonaws.com/category'),
+      );
 
-    if (response.statusCode == 200) {
-      // Cache the new data
-      await CategoryCacheManager.cacheCategories(response.body);
-      
-      final data = json.decode(response.body);
-      final categories = data['Category'] as List;
-
-      if (mounted) {
+      if (response.statusCode == 200) {
+        await CategoryCacheManager.cacheCategories(response.body);
+        final data = json.decode(response.body);
+        final categories = data['Category'] as List;
         setState(() {
-          _categories.clear(); // Clear existing categories
+          _categories.clear();
           _categories.add(Category(id: 'all', title: 'All'));
-          _categories.addAll(
-            categories.map((cat) => Category.fromJson(cat)).toList(),
-          );
+          _categories.addAll(categories.map((cat) => Category.fromJson(cat)));
         });
+        await _logEvent('categories_loaded', {'source': 'api'});
       }
-    } else {
-      throw Exception('Failed to load categories');
+    } catch (e) {
+      await _logEvent(EVENT_ERROR, {'type': 'category_fetch', 'error': e.toString()});
     }
-  } catch (e) {
-    debugPrint('Error fetching categories: $e');
   }
-}
-
-// Optional: Method to force refresh categories
-Future<void> refreshCategories() async {
-  try {
-    await CategoryCacheManager.clearCache();
-    await _fetchCategories();
-  } catch (e) {
-    debugPrint('Error refreshing categories: $e');
-  }
-}
 
   Future<void> _loadMoreShops() async {
-  if (_isLoadingMore || !_hasNextPage) return;
+    if (_isLoadingMore || !_hasNextPage) return;
+    setState(() => _isLoadingMore = true);
 
-  setState(() => _isLoadingMore = true);
-
-  try {
-    // Check cache first
-    final cachedData = await ShopCacheManager.getCachedShopData(_currentPage);
-    if (cachedData != null) {
-      final shops = cachedData['Shop'] as List;
-      final pagination = cachedData['pagination'];
-
-      if (mounted) {
+    try {
+      final cachedData = await ShopCacheManager.getCachedShopData(_currentPage);
+      if (cachedData != null) {
+        final shops = cachedData['Shop'] as List;
+        final pagination = cachedData['pagination'];
         setState(() {
           _shops.addAll(shops.map((shop) => Shop.fromJson(shop)));
           _currentPage++;
           _hasNextPage = pagination['hasNextPage'] ?? false;
           _isLoadingMore = false;
         });
+        await _logEvent('shops_loaded', {'source': 'cache', 'page': _currentPage});
+        return;
       }
-      return;
-    }
 
-    // If no valid cache, fetch from API
-    final response = await http.get(
-      Uri.parse('https://19ax8udl06.execute-api.ap-south-1.amazonaws.com/getshop?page=$_currentPage'),
-    );
+      final response = await http.get(
+        Uri.parse('https://19ax8udl06.execute-api.ap-south-1.amazonaws.com/getshop?page=$_currentPage'),
+      );
 
-    if (response.statusCode == 200) {
-      // Cache the new data
-      await ShopCacheManager.cacheShopData(_currentPage, response.body);
-      
-      final data = json.decode(response.body);
-      final shops = data['Shop'] as List;
-      final pagination = data['pagination'];
-
-      if (mounted) {
+      if (response.statusCode == 200) {
+        await ShopCacheManager.cacheShopData(_currentPage, response.body);
+        final data = json.decode(response.body);
+        final shops = data['Shop'] as List;
+        final pagination = data['pagination'];
         setState(() {
           _shops.addAll(shops.map((shop) => Shop.fromJson(shop)));
           _currentPage++;
           _hasNextPage = pagination['hasNextPage'] ?? false;
           _isLoadingMore = false;
         });
+        await _logEvent('shops_loaded', {'source': 'api', 'page': _currentPage});
       }
-    } else {
-      if (mounted) {
-        setState(() => _isLoadingMore = false);
-      }
-      throw Exception('Failed to load shops');
-    }
-  } catch (e) {
-    if (mounted) {
+    } catch (e) {
       setState(() => _isLoadingMore = false);
+      await _logEvent(EVENT_ERROR, {'type': 'shops_fetch', 'error': e.toString()});
     }
-    debugPrint('Error fetching shops: $e');
   }
-}
 
-// Optional: Method to force refresh shops
-Future<void> refreshShops() async {
-  try {
+  Future<void> _refreshShops() async {
+    await _logEvent(EVENT_REFRESH, {'previous_count': _shops.length});
     await ShopCacheManager.clearCache();
     _currentPage = 1;
     _shops.clear();
     _hasNextPage = true;
     await _loadMoreShops();
-  } catch (e) {
-    debugPrint('Error refreshing shops: $e');
   }
-}
+
+  Future<void> _handleCategorySelect(Category category) async {
+    await _logEvent(EVENT_CATEGORY_SELECT, {
+      'category_id': category.id,
+      'category_name': category.title
+    });
+    setState(() => _selectedCategory = category.title);
+  }
+
+  Future<void> _handleShopClick(Shop shop) async {
+    await _logEvent(EVENT_SHOP_CLICK, {
+      'shop_id': shop.id,
+      'shop_name': shop.title,
+      'categories': shop.category.join(',')
+    });
+    await _launchUrl(shop.url);
+  }
 
   List<Shop> _getFilteredShops() {
     if (_selectedCategory == 'All') return _shops;
-    return _shops.where((shop) => 
-      shop.category.contains(_selectedCategory)
-    ).toList();
+    return _shops.where((shop) => shop.category.contains(_selectedCategory)).toList();
+  }
+
+  Future<void> _launchUrl(String url) async {
+    try {
+      String cleanUrl = url.trim();
+      if (!cleanUrl.startsWith('http')) cleanUrl = 'https://$cleanUrl';
+      final uri = Uri.parse(cleanUrl);
+      
+      try {
+        final launched = await launchUrl(
+          uri,
+          mode: LaunchMode.externalNonBrowserApplication,
+          webViewConfiguration: const WebViewConfiguration(enableJavaScript: true, enableDomStorage: true),
+        );
+        if (launched) {
+          await _logEvent(EVENT_URL_LAUNCH, {'url': cleanUrl, 'type': 'chrome'});
+          return;
+        }
+      } catch (e) {
+        debugPrint('Chrome launch failed: $e');
+      }
+
+      final fallbackLaunched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (fallbackLaunched) {
+        await _logEvent(EVENT_URL_LAUNCH, {'url': cleanUrl, 'type': 'browser'});
+      }
+    } catch (e) {
+      await _logEvent(EVENT_ERROR, {'type': 'url_launch', 'error': e.toString()});
+    }
+  }
+
+  Widget _buildShopCard(Shop shop) {
+    return InkWell(
+      onTap: () => _handleShopClick(shop),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 5,
+            offset: const Offset(0, 2),
+          )],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              height: 80,
+              width: 80,
+              padding: const EdgeInsets.all(12),
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Image.network(
+                shop.logo,
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) => Icon(Icons.store, size: 40, color: Colors.grey[400]),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Text(
+                shop.title,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCategories() {
+    return Container(
+      height: 60,
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: _categories.length,
+        itemBuilder: (context, index) {
+          final category = _categories[index];
+          final isSelected = category.title == _selectedCategory;
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: FilterChip(
+              selected: isSelected,
+              label: Text(category.title),
+              onSelected: (_) => _handleCategorySelect(category),
+              selectedColor: Colors.amber,
+              checkmarkColor: Colors.amber,
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+                side: BorderSide(color: isSelected ? Colors.amber : Colors.grey[300]!),
+              ),
+            ),
+          );
+        },
+      ),
+    );
   }
 
   Widget _buildShimmerLoading() {
@@ -265,7 +358,7 @@ Future<void> refreshShops() async {
           crossAxisSpacing: 16,
           mainAxisSpacing: 16,
         ),
-        itemCount: 6, // Show 6 shimmer items
+        itemCount: 6,
         itemBuilder: (_, __) => Container(
           decoration: BoxDecoration(
             color: Colors.white,
@@ -321,126 +414,6 @@ Future<void> refreshShops() async {
     );
   }
 
-  Widget _buildCategories() {
-    return Container(
-      height: 60,
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: _categories.length,
-        itemBuilder: (context, index) {
-          final category = _categories[index];
-          final isSelected = category.title == _selectedCategory;
-          return Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: FilterChip(
-              selected: isSelected,
-              label: Text(category.title),
-              onSelected: (selected) {
-                setState(() => _selectedCategory = category.title);
-              },
-              selectedColor: Colors.amber,
-              checkmarkColor: Colors.amber,
-              backgroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-                side: BorderSide(
-                  color: isSelected ? Colors.amber : Colors.grey[300]!,
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildShopCard(Shop shop) {
-    return InkWell(
-      onTap: () => _launchUrl(shop.url),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
-              spreadRadius: 1,
-              blurRadius: 5,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              height: 80,
-              width: 80,
-              padding: const EdgeInsets.all(12),
-              margin: const EdgeInsets.only(bottom: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Image.network(
-                shop.logo,
-                fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) =>
-                    Icon(Icons.store, size: 40, color: Colors.grey[400]),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Text(
-                shop.title,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<void> _launchUrl(String url) async {
-  try {
-    // Ensure URL has a protocol
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      url = 'https://$url';
-    }
-
-    final uri = Uri.parse(url);
-    await launchUrl(
-      uri,
-      mode: LaunchMode.externalNonBrowserApplication,
-      webViewConfiguration: const WebViewConfiguration(
-        enableJavaScript: true,
-        enableDomStorage: true,
-      ),
-    );
-  } catch (e) {
-    debugPrint('Error launching URL: $e');
-    // Try fallback to default browser if Chrome fails
-    try {
-      final uri = Uri.parse(url);
-      await launchUrl(
-        uri,
-        mode: LaunchMode.externalApplication,
-      );
-    } catch (e) {
-      debugPrint('Error launching URL in default browser: $e');
-    }
-  }
-}
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -449,37 +422,51 @@ Future<void> refreshShops() async {
       drawer: const SidebarDrawer(),
       body: Column(
         children: [
-          // Categories
           _isLoading ? _buildCategoryShimmer() : _buildCategories(),
-          // Shops Grid
           Expanded(
             child: _isLoading
                 ? _buildShimmerLoading()
-                : GridView.builder(
-                    controller: _scrollController,
-                    padding: const EdgeInsets.all(16),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      childAspectRatio: 1,
-                      crossAxisSpacing: 16,
-                      mainAxisSpacing: 16,
+                : RefreshIndicator(
+                    onRefresh: _refreshShops,
+                    child: GridView.builder(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.all(16),
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        childAspectRatio: 1,
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 16,
+                      ),
+                      itemCount: _getFilteredShops().length + (_hasNextPage ? 1 : 0),
+                      itemBuilder: (context, index) {
+                        if (index == _getFilteredShops().length) {
+                          return _isLoadingMore
+                              ? const Center(child: CircularProgressIndicator())
+                              : const SizedBox.shrink();
+                        }
+                        
+                        _logEvent('shop_impression', {
+                          'shop_id': _getFilteredShops()[index].id,
+                          'shop_title': _getFilteredShops()[index].title,
+                          'position': index,
+                        });
+                        
+                        return _buildShopCard(_getFilteredShops()[index]);
+                      },
                     ),
-                    itemCount: _getFilteredShops().length + (_hasNextPage ? 1 : 0),
-                    itemBuilder: (context, index) {
-                      if (index == _getFilteredShops().length) {
-                        return _isLoadingMore
-                            ? const Center(child: CircularProgressIndicator())
-                            : const SizedBox.shrink();
-                      }
-                      return _buildShopCard(_getFilteredShops()[index]);
-                    },
                   ),
           ),
         ],
       ),
       bottomNavigationBar: CustomBottomNavigation(
         currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
+        onTap: (index) {
+          _logEvent(EVENT_NAVIGATION, {
+            'from_index': _currentIndex,
+            'to_index': index,
+          });
+          setState(() => _currentIndex = index);
+        },
       ),
     );
   }

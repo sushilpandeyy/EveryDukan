@@ -11,6 +11,10 @@ import './page/shops.dart';
 import './page/coupon.dart';
 import './page/deals.dart';
 import './page/onboard.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import './page/no.dart';
+import 'dart:async';  // Add this for StreamSubscription
+
 
 // Single source of truth for preference keys
 class PreferenceKeys {
@@ -84,16 +88,60 @@ class AppEntryPoint extends StatefulWidget {
   State<AppEntryPoint> createState() => _AppEntryPointState();
 }
 
-class _AppEntryPointState extends State<AppEntryPoint> {
+class _AppEntryPointState extends State<AppEntryPoint> with WidgetsBindingObserver {
   bool _isLoading = true;
   bool _needsOnboarding = true;
+  bool _hasInternet = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _checkInitialConnectivity();
     _checkOnboardingStatus();
+    _setupConnectivityListener();
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _checkInitialConnectivity();
+    }
+  }
+
+  Future<void> _checkInitialConnectivity() async {
+    try {
+      final result = await Connectivity().checkConnectivity();
+      if (mounted) {
+        setState(() {
+          _hasInternet = result != ConnectivityResult.none;
+        });
+      }
+    } catch (e) {
+      debugPrint('Initial connectivity check failed: $e');
+    }
+  }
+
+  void _setupConnectivityListener() {
+    Connectivity().onConnectivityChanged.listen((List<ConnectivityResult> results) {
+      if (mounted) {
+        setState(() {
+          _hasInternet = results.any((result) => 
+            result == ConnectivityResult.wifi || 
+            result == ConnectivityResult.mobile || 
+            result == ConnectivityResult.ethernet
+          );
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+  
   Future<void> _checkOnboardingStatus() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -110,7 +158,7 @@ class _AppEntryPointState extends State<AppEntryPoint> {
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _needsOnboarding = true; // Default to showing onboarding if there's an error
+          _needsOnboarding = false;  
         });
       }
     }
@@ -133,7 +181,12 @@ class _AppEntryPointState extends State<AppEntryPoint> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
+     if (!_hasInternet) {
+      return NoInternetScreen(
+        onRetry: _checkInitialConnectivity,
+      );
+    }
+   if (_isLoading) {
       return const Scaffold(
         body: Center(
           child: CircularProgressIndicator(),

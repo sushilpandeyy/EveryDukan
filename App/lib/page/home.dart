@@ -27,18 +27,47 @@ class _HomePageState extends State<HomePage> {
   List<dynamic> _components = [];
   bool _isLoading = true;
   bool _isError = false;
+  late final FirebaseAnalytics analytics;
+  
+  // Analytics Event Names
+  static const String EVENT_HOME_PAGE_VIEW = 'home_page_view';
+  static const String EVENT_BANNER_CLICK = 'banner_click';
+  static const String EVENT_BRAND_CLICK = 'brand_click';
+  static const String EVENT_VIEW_ALL_CLICK = 'view_all_click';
+  static const String EVENT_REFRESH_HOME = 'refresh_home';
+  static const String EVENT_ERROR_OCCURRED = 'error_occurred';
+  static const String EVENT_NAVIGATION_CLICK = 'navigation_click';
 
-  final FirebaseAnalytics analytics = FirebaseAnalytics.instance;
+  @override
+  void initState() {
+    super.initState();
+    _initializeAnalytics();
+    fetchHomeData();
+  }
 
- Future<void> initializeFirebase() async {
+  Future<void> _initializeAnalytics() async {
     try {
       await Firebase.initializeApp();
-      // analytics is already initialized as FirebaseAnalytics.instance
-      // Log home page open event
-      await analytics?.logEvent(
-        name: 'home_page_open',
+      analytics = FirebaseAnalytics.instance;
+      
+      // Log initial page view with screen name
+      await analytics.logScreenView(
+        screenName: 'HomePage',
+        screenClass: 'HomePage',
+      );
+      
+      // Set user properties if available
+      await analytics.setUserProperty(
+        name: 'user_type',
+        value: 'free_user', // Or determine based on your user status
+      );
+      
+      // Log session start
+      await analytics.logEvent(
+        name: EVENT_HOME_PAGE_VIEW,
         parameters: {
           'timestamp': DateTime.now().toIso8601String(),
+          'is_first_session': true, // You might want to track this separately
         },
       );
     } catch (e) {
@@ -46,58 +75,84 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  @override
-  void initState() {
-    super.initState();
-    initializeFirebase();
-    fetchHomeData();
+  Future<void> _logAnalyticsEvent(String eventName, Map<String, dynamic> parameters) async {
+    try {
+      await analytics.logEvent(
+        name: eventName,
+        parameters: {
+          'timestamp': DateTime.now().toIso8601String(),
+          ...parameters,
+        },
+      );
+    } catch (e) {
+      debugPrint('Failed to log analytics event: $e');
+    }
   }
 
   Future<void> fetchHomeData() async {
-  try {
-    // First try to get cached data
-    final cachedData = await CacheManager.getCachedHomeData();
-    if (cachedData != null) {
+    try {
+      // First try to get cached data
+      final cachedData = await CacheManager.getCachedHomeData();
+      if (cachedData != null) {
+        if (mounted) {
+          setState(() {
+            _components = cachedData['components'];
+            _isLoading = false;
+            _isError = false;
+          });
+          
+          // Log cache hit event
+          await _logAnalyticsEvent('home_data_cache_hit', {
+            'component_count': _components.length,
+            'data_source': 'cache',
+          });
+        }
+        return;
+      }
+
+      // If no valid cache, fetch from API
+      final response = await http.get(
+        Uri.parse('https://19ax8udl06.execute-api.ap-south-1.amazonaws.com/home'),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (mounted) {
+          setState(() {
+            _components = data['components'];
+            _isLoading = false;
+            _isError = false;
+          });
+          
+          // Log successful API fetch
+          await _logAnalyticsEvent('home_data_fetched', {
+            'component_count': _components.length,
+            'data_source': 'api',
+            'response_time': DateTime.now().millisecondsSinceEpoch,
+          });
+          
+          // Cache the new data
+          await CacheManager.cacheHomeData(response.body);
+        }
+      } else {
+        throw Exception('Failed to load home data');
+      }
+    } catch (e) {
+      debugPrint('Error fetching home data: $e');
       if (mounted) {
         setState(() {
-          _components = cachedData['components'];
           _isLoading = false;
-          _isError = false;
+          _isError = true;
+        });
+        
+        // Log error event
+        await _logAnalyticsEvent(EVENT_ERROR_OCCURRED, {
+          'error_type': 'data_fetch_error',
+          'error_message': e.toString(),
         });
       }
-      return;
-    }
-
-    // If no valid cache, fetch from API
-    final response = await http.get(
-      Uri.parse('https://19ax8udl06.execute-api.ap-south-1.amazonaws.com/home'),
-    );
-
-    if (response.statusCode == 200) {
-      // Cache the new data
-      await CacheManager.cacheHomeData(response.body);
-      
-      final data = json.decode(response.body);
-      if (mounted) {
-        setState(() {
-          _components = data['components'];
-          _isLoading = false;
-          _isError = false;
-        });
-      }
-    } else {
-      throw Exception('Failed to load home data');
-    }
-  } catch (e) {
-    debugPrint('Error fetching home data: $e');
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-        _isError = true;
-      });
     }
   }
-}
 
   Widget _buildComponent(Map<String, dynamic> component) {
     switch (component['type']) {
@@ -105,13 +160,24 @@ class _HomePageState extends State<HomePage> {
         return ReusableBannerComponent(
           title: component['title'],
           onViewAll: () {
+            _logAnalyticsEvent(EVENT_VIEW_ALL_CLICK, {
+              'component_type': 'ReusableBanner',
+              'title': component['title'],
+            });
             debugPrint('View All clicked');
           },
           banners: (component['banners'] as List).map((banner) => 
             BannerCardModel(
               imageUrl: banner['imageUrl'],
               buttonText: 'Grab',
-              onButtonPressed: () => openUrl(banner['clickUrl']),
+              onButtonPressed: () {
+                _logAnalyticsEvent(EVENT_BANNER_CLICK, {
+                  'banner_url': banner['clickUrl'],
+                  'banner_type': 'ReusableBanner',
+                  'banner_position': component['banners'].indexOf(banner),
+                });
+                openUrl(banner['clickUrl']);
+              },
             )
           ).toList(),
         );
@@ -119,7 +185,14 @@ class _HomePageState extends State<HomePage> {
       case 'BannerCard':
         return ReusableBanner(
           imageUrl: component['imageUrl'],
-          onImageTapped: () => openUrl(component['clickUrl']),
+          onImageTapped: () {
+            _logAnalyticsEvent(EVENT_BANNER_CLICK, {
+              'banner_url': component['clickUrl'],
+              'banner_type': 'SingleBanner',
+              'banner_position': _components.indexOf(component),
+            });
+            openUrl(component['clickUrl']);
+          },
         );
 
       case 'BrandCard':
@@ -130,8 +203,22 @@ class _HomePageState extends State<HomePage> {
               logoUrl: brand['logoUrl'],
               tag: brand['tag'],
               buttonText: brand['buttonText'],
-              onCardTap: () => openUrl(brand['clickUrl']),
-              onButtonPressed: () => openUrl(brand['clickUrl']),
+              onCardTap: () {
+                _logAnalyticsEvent(EVENT_BRAND_CLICK, {
+                  'brand_url': brand['clickUrl'],
+                  'brand_tag': brand['tag'],
+                  'interaction_type': 'card_tap',
+                });
+                openUrl(brand['clickUrl']);
+              },
+              onButtonPressed: () {
+                _logAnalyticsEvent(EVENT_BRAND_CLICK, {
+                  'brand_url': brand['clickUrl'],
+                  'brand_tag': brand['tag'],
+                  'interaction_type': 'button_press',
+                });
+                openUrl(brand['clickUrl']);
+              },
             )
           ).toList(),
         );
@@ -146,22 +233,12 @@ class _HomePageState extends State<HomePage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.error_outline,
-            size: 60,
-            color: Colors.grey[600],
+          const Text(
+            'An error occurred while fetching data.',
+            style: TextStyle(fontSize: 18, color: Colors.red),
           ),
-          const SizedBox(height: 16),
-          Text(
-            'Oops! Something went wrong',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey[800],
-            ),
-          ),
-          const SizedBox(height: 8),
-          TextButton(
+          const SizedBox(height: 20),
+          ElevatedButton(
             onPressed: () {
               setState(() {
                 _isLoading = true;
@@ -169,7 +246,7 @@ class _HomePageState extends State<HomePage> {
               });
               fetchHomeData();
             },
-            child: const Text('Try Again'),
+            child: const Text('Retry'),
           ),
         ],
       ),
@@ -182,7 +259,12 @@ class _HomePageState extends State<HomePage> {
       appBar: const Header(),
       drawer: const SidebarDrawer(),
       body: RefreshIndicator(
-        onRefresh: fetchHomeData,
+        onRefresh: () async {
+          await _logAnalyticsEvent(EVENT_REFRESH_HOME, {
+            'previous_error_state': _isError,
+          });
+          await fetchHomeData();
+        },
         child: _isLoading
             ? const HomeSkeletonLoading()
             : _isError
@@ -212,6 +294,10 @@ class _HomePageState extends State<HomePage> {
       bottomNavigationBar: CustomBottomNavigation(
         currentIndex: _currentIndex,
         onTap: (index) {
+          _logAnalyticsEvent(EVENT_NAVIGATION_CLICK, {
+            'from_index': _currentIndex,
+            'to_index': index,
+          });
           setState(() {
             _currentIndex = index;
           });

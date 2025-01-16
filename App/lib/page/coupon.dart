@@ -24,29 +24,63 @@ class _CouponScreenState extends State<CouponScreen> {
   int _currentPage = 1;
   int _currentIndex = 3;
   bool _isInitialLoading = true;
-  FirebaseAnalytics? analytics = FirebaseAnalytics.instance;
+  late final FirebaseAnalytics analytics;
+  
+  static const String EVENT_COUPON_PAGE_VIEW = 'coupon_page_view';
+  static const String EVENT_COUPON_CLICK = 'coupon_click';
+  static const String EVENT_COUPON_COPY = 'coupon_copy';
+  static const String EVENT_COUPON_VISIT = 'coupon_visit_shop';
+  static const String EVENT_PAGE_REFRESH = 'coupon_page_refresh';
+  static const String EVENT_ERROR_OCCURRED = 'coupon_error';
+  static const String EVENT_LOAD_MORE = 'load_more_coupons';
+  static const String EVENT_VIEW_DETAILS = 'view_coupon_details';
 
-Future<void> initializeFirebase() async {
+Future<void> _initializeAnalytics() async {
     try {
       await Firebase.initializeApp();
-      // analytics is already initialized as FirebaseAnalytics.instance
-      // Log home page open event
-      await analytics?.logEvent(
-        name: 'Coupon_page_open',
+      analytics = FirebaseAnalytics.instance;
+      
+      await analytics.logScreenView(
+        screenName: 'CouponScreen',
+        screenClass: 'CouponScreen',
+      );
+      
+      await analytics.setUserProperty(
+        name: 'last_viewed_screen',
+        value: 'coupons',
+      );
+      
+      await analytics.logEvent(
+        name: EVENT_COUPON_PAGE_VIEW,
         parameters: {
           'timestamp': DateTime.now().toIso8601String(),
+          'is_first_load': true,
         },
       );
     } catch (e) {
       debugPrint('Failed to initialize Firebase Analytics: $e');
     }
-  } 
+  }
+
+  Future<void> _logAnalyticsEvent(String eventName, Map<String, dynamic> parameters) async {
+    try {
+      await analytics.logEvent(
+        name: eventName,
+        parameters: {
+          'timestamp': DateTime.now().toIso8601String(),
+          ...parameters,
+        },
+      );
+    } catch (e) {
+      debugPrint('Failed to log analytics event: $e');
+    }
+  }
 
   @override
   void initState() {
     super.initState();
+    _initializeAnalytics();
     _loadMoreCoupons();
-    initializeFirebase();
     _scrollController.addListener(_onScroll);
   }
 
@@ -56,10 +90,14 @@ Future<void> initializeFirebase() async {
     super.dispose();
   }
 
-  void _onScroll() {
+void _onScroll() {
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 200) {
       if (_hasNextPage && !_isLoading) {
+        _logAnalyticsEvent(EVENT_LOAD_MORE, {
+          'page_number': _currentPage,
+          'current_coupon_count': _coupons.length,
+        });
         _loadMoreCoupons();
       }
     }
@@ -76,115 +114,130 @@ Future<void> initializeFirebase() async {
 
 
    Future<void> _loadMoreCoupons() async {
-  if (_isLoading || !_hasNextPage) return;
+    if (_isLoading || !_hasNextPage) return;
 
-  setState(() {
-    _isLoading = true;
-  });
+    setState(() {
+      _isLoading = true;
+    });
 
-  try {
-    // Check cache first
-    final cachedData = await CouponCacheManager.getCachedCouponData(_currentPage);
-    if (cachedData != null) {
-      final coupons = cachedData['Coupon'] as List;
-      final pagination = cachedData['pagination'];
+    try {
+      final cachedData = await CouponCacheManager.getCachedCouponData(_currentPage);
+      if (cachedData != null) {
+        final coupons = cachedData['Coupon'] as List;
+        final pagination = cachedData['pagination'];
 
-      final newCoupons = coupons.map((coupon) => Coupon(
-        title: coupon['title'],
-        merchantName: coupon['merchantName'],
-        merchantLogo: coupon['merchantLogo'],
-        couponCode: coupon['couponCode'],
-        description: coupon['description'],
-        expirationDate: coupon['expirationDate'],
-        discount: coupon['discount'],
-        category: coupon['category'],
-        backgroundColor: _parseColor(coupon['backgroundColor']),
-        accentColor: _parseColor(coupon['accentColor']),
-        clickurl: coupon['clickurl'],
-        terms: List<String>.from(coupon['terms']),
-      )).toList();
+        final newCoupons = coupons.map((coupon) => Coupon(
+          title: coupon['title'],
+          merchantName: coupon['merchantName'],
+          merchantLogo: coupon['merchantLogo'],
+          couponCode: coupon['couponCode'],
+          description: coupon['description'],
+          expirationDate: coupon['expirationDate'],
+          discount: coupon['discount'],
+          category: coupon['category'],
+          backgroundColor: _parseColor(coupon['backgroundColor']),
+          accentColor: _parseColor(coupon['accentColor']),
+          clickurl: coupon['clickurl'],
+          terms: List<String>.from(coupon['terms']),
+        )).toList();
 
-      if (mounted) {
-        setState(() {
-          _coupons.addAll(newCoupons);
-          _currentPage++;
-          _hasNextPage = pagination['hasNextPage'];
-          _isLoading = false;
-          _isInitialLoading = false;
+        await _logAnalyticsEvent('coupon_data_loaded', {
+          'source': 'cache',
+          'page': _currentPage,
+          'coupon_count': newCoupons.length,
         });
-      }
-      return;
-    }
 
-    // If no valid cache, fetch from API
+        if (mounted) {
+          setState(() {
+            _coupons.addAll(newCoupons);
+            _currentPage++;
+            _hasNextPage = pagination['hasNextPage'];
+            _isLoading = false;
+            _isInitialLoading = false;
+          });
+        }
+        return;
+      }
+
     final response = await http.get(
-      Uri.parse('https://19ax8udl06.execute-api.ap-south-1.amazonaws.com/coupon?page=$_currentPage&limit=10'),
-    );
+        Uri.parse('https://19ax8udl06.execute-api.ap-south-1.amazonaws.com/coupon?page=$_currentPage&limit=10'),
+      );
 
-    if (response.statusCode == 200) {
-      // Cache the new data
-      await CouponCacheManager.cacheCouponData(_currentPage, response.body);
+      if (response.statusCode == 200) {
+        await CouponCacheManager.cacheCouponData(_currentPage, response.body);
+        
+        final data = json.decode(response.body);
+        final coupons = data['Coupon'] as List;
+        final pagination = data['pagination'];
+
+        final newCoupons = coupons.map((coupon) => Coupon(
+          title: coupon['title'],
+          merchantName: coupon['merchantName'],
+          merchantLogo: coupon['merchantLogo'],
+          couponCode: coupon['couponCode'],
+          description: coupon['description'],
+          expirationDate: coupon['expirationDate'],
+          discount: coupon['discount'],
+          category: coupon['category'],
+          backgroundColor: _parseColor(coupon['backgroundColor']),
+          accentColor: _parseColor(coupon['accentColor']),
+          clickurl: coupon['clickurl'],
+          terms: List<String>.from(coupon['terms']),
+        )).toList();
+
+        await _logAnalyticsEvent('coupon_data_loaded', {
+          'source': 'api',
+          'page': _currentPage,
+          'coupon_count': newCoupons.length,
+          'response_time': DateTime.now().millisecondsSinceEpoch,
+        });
+
+        if (mounted) {
+          setState(() {
+            _coupons.addAll(newCoupons);
+            _currentPage++;
+            _hasNextPage = pagination['hasNextPage'];
+            _isLoading = false;
+            _isInitialLoading = false;
+          });
+        }
+      } else {
+        throw Exception('Failed to load coupons');
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _isInitialLoading = false;
+        });
+      }
       
-      final data = json.decode(response.body);
-      final coupons = data['Coupon'] as List;
-      final pagination = data['pagination'];
-
-      final newCoupons = coupons.map((coupon) => Coupon(
-        title: coupon['title'],
-        merchantName: coupon['merchantName'],
-        merchantLogo: coupon['merchantLogo'],
-        couponCode: coupon['couponCode'],
-        description: coupon['description'],
-        expirationDate: coupon['expirationDate'],
-        discount: coupon['discount'],
-        category: coupon['category'],
-        backgroundColor: _parseColor(coupon['backgroundColor']),
-        accentColor: _parseColor(coupon['accentColor']),
-        clickurl: coupon['clickurl'],
-        terms: List<String>.from(coupon['terms']),
-      )).toList();
-
-      if (mounted) {
-        setState(() {
-          _coupons.addAll(newCoupons);
-          _currentPage++;
-          _hasNextPage = pagination['hasNextPage'];
-          _isLoading = false;
-          _isInitialLoading = false;
-        });
-      }
-    } else {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _isInitialLoading = false;
-        });
-      }
-      throw Exception('Failed to load coupons');
-    }
-  } catch (e) {
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-        _isInitialLoading = false;
+      await _logAnalyticsEvent(EVENT_ERROR_OCCURRED, {
+        'error_type': 'data_fetch_error',
+        'error_message': e.toString(),
+        'page': _currentPage,
       });
+      
+      debugPrint('Error fetching coupons: $e');
     }
-    debugPrint('Error fetching coupons: $e');
   }
-}
 
-// Optional: Method to force refresh coupons
 Future<void> refreshCoupons() async {
-  try {
-    await CouponCacheManager.clearCache();
-    _currentPage = 1;
-    _coupons.clear();
-    _hasNextPage = true;
-    await _loadMoreCoupons();
-  } catch (e) {
-    debugPrint('Error refreshing coupons: $e');
+    try {
+      await _logAnalyticsEvent(EVENT_PAGE_REFRESH, {
+        'previous_coupon_count': _coupons.length,
+      });
+      
+      await CouponCacheManager.clearCache();
+      _currentPage = 1;
+      _coupons.clear();
+      _hasNextPage = true;
+      await _loadMoreCoupons();
+    } catch (e) {
+      debugPrint('Error refreshing coupons: $e');
+    }
   }
-}
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -197,7 +250,13 @@ Future<void> refreshCoupons() async {
       ),
       bottomNavigationBar: CustomBottomNavigation(
         currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
+        onTap: (index) {
+          _logAnalyticsEvent('navigation_change', {
+            'from_index': _currentIndex,
+            'to_index': index,
+          });
+          setState(() => _currentIndex = index);
+        },
       ),
     );
   }
