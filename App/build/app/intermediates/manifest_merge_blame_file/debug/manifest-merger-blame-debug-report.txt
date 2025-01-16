@@ -155,7 +155,7 @@
 82        android:debuggable="true"
 83        android:extractNativeLibs="true"
 84        android:icon="@mipmap/ic_launcher"
-85        android:label="d2cdeals" >
+85        android:label="EveryDukan" >
 86        <activity
 87            android:name="com.deals.d2c.MainActivity"
 88            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
