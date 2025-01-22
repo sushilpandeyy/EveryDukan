@@ -4,6 +4,16 @@ EveryDukan is a platform that provides information and usability of famous brand
 
 ---
 
+## Tech Stack
+
+1. Dart 
+2. Node JS Microservices
+3. AWS Lambda 
+3. NextJS
+4. Typescript
+ 
+---
+
 ## Project Structure
 
 The project is divided into four main components:
@@ -22,7 +32,7 @@ The project is divided into four main components:
      - API services to fetch data about brands, offers, and coupons.
      - Serverless architecture for handling high concurrency.
      - Integration with databases for secure and reliable data storage.
-   - **Tech Stack**: Node.js, AWS Lambda, DynamoDB.
+   - **Tech Stack**: Node.js, AWS Lambda, MongoDB.
 
 ### 3. **D2C Dashboard Folder**
    - **Description**: Contains the admin dashboard application for managing the platform, built using Next.js.
@@ -87,14 +97,3 @@ The project is divided into four main components:
   npm run build
   npm start
   ```
-
----
-
-## Contributing
-
-We welcome contributions to improve EveryDukan. Please follow these steps:
-1. Fork the repository.
-2. Create a feature branch.
-3. Commit your changes and push them to your fork.
-4. Create a pull request for review.
- 
