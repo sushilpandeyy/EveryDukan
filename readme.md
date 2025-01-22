@@ -1,115 +1,100 @@
 # EveryDukan
 
-EveryDukan is a comprehensive platform designed to facilitate efficient management and smooth operations for businesses of all sizes. It is built with modern technologies to provide a seamless experience for users, administrators, and backend operations.
+EveryDukan is a platform that provides information and usability of famous brands, their recent offers, and coupon codes. The project is built with modern technologies to deliver a seamless user experience across mobile, web, and serverless platforms.
 
 ---
 
 ## Project Structure
 
-The project is organized into four main folders:
+The project is divided into four main components:
 
-1. **App**:
-   - Contains the Dart application source code.
-   - The mobile application is designed to provide users with an intuitive interface to interact with the EveryDukan platform.
+### 1. **App Folder**
+   - **Description**: This folder contains the source code for the EveryDukan mobile application, built using Dart. The app is designed for both Android and iOS platforms.
+   - **Features**:
+     - User-friendly and intuitive interface.
+     - Provides real-time updates about offers and coupons.
+     - Multi-platform compatibility for seamless usage.
+   - **Tech Stack**: Flutter, Dart.
 
-2. **Function**:
-   - Houses the backend services built using Node.js.
-   - Backend is deployed on AWS Lambda for scalability and cost efficiency.
-   - Responsible for handling API requests, authentication, database operations, and other server-side logic.
+### 2. **Function Folder**
+   - **Description**: Houses the backend services built using Node.js. The backend is deployed on AWS Lambda, ensuring scalability and cost-efficiency.
+   - **Features**:
+     - API services to fetch data about brands, offers, and coupons.
+     - Serverless architecture for handling high concurrency.
+     - Integration with databases for secure and reliable data storage.
+   - **Tech Stack**: Node.js, AWS Lambda, DynamoDB.
 
-3. **d2cdashboard**:
-   - Contains the admin management application built with Next.js.
-   - Provides tools for administrators to manage users, products, orders, and platform settings.
+### 3. **D2C Dashboard Folder**
+   - **Description**: Contains the admin dashboard application for managing the platform, built using Next.js.
+   - **Features**:
+     - Real-time data visualization for offers and user activity.
+     - Tools for managing content related to brands and coupons.
+     - Modern UI with server-side rendering for improved performance.
+   - **Tech Stack**: Next.js, React, Tailwind CSS.
 
-4. **everydukan**:
-   - Serves as the homepage of the platform.
-   - Built with Next.js to ensure fast loading and SEO optimization.
-   - Acts as the gateway for visitors and potential users to learn more about EveryDukan.
-
----
-
-## Features
-
-### App (Dart Application)
-- User-friendly interface.
-- Real-time updates and notifications.
-- Secure authentication and user management.
-- Extensive product browsing and ordering functionalities.
-
-### Function (Backend Services)
-- RESTful API endpoints.
-- Secure and scalable architecture using AWS Lambda.
-- Integration with databases for data persistence.
-- Logging and monitoring for performance and debugging.
-
-### d2cdashboard (Admin Application)
-- Comprehensive management of users, orders, and products.
-- Dashboard analytics for insights and decision-making.
-- Role-based access control for administrators.
-
-### everydukan (Homepage)
-- Information about the platform and its features.
-- Contact forms and links to download the mobile application.
-- SEO-optimized pages to attract and retain visitors.
-
----
-
-## Technologies Used
-
-- **Dart**: For building the mobile application.
-- **Node.js**: For backend services.
-- **AWS Lambda**: For deploying scalable backend functions.
-- **Next.js**: For building the admin dashboard and homepage.
+### 4. **EveryDukan Homepage Folder**
+   - **Description**: Contains the code for the public-facing homepage of the EveryDukan platform, built using Next.js.
+   - **Features**:
+     - Provides an overview of the platform and its features.
+     - Optimized for SEO and responsive across devices.
+     - Fetches dynamic data for real-time updates about brands and offers.
+   - **Tech Stack**: Next.js, React, Tailwind CSS.
 
 ---
 
 ## Getting Started
 
 ### Prerequisites
-- Install Node.js and npm.
-- Install Flutter for Dart development.
-- Set up AWS CLI and access credentials.
+- Node.js (v14 or later)
+- Flutter SDK
+- AWS CLI (for deployment)
+- A code editor like VS Code
 
 ### Installation
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-repo/everydukan.git
+   git clone https://github.com/sushilpandeyy/EveryDukan
    ```
-2. Navigate to the respective folders for setup:
-   - **App**: Install Dart dependencies.
-     ```bash
-     cd App
-     flutter pub get
-     ```
-   - **Function**: Install Node.js dependencies.
-     ```bash
-     cd Function
-     npm install
-     ```
-   - **d2cdashboard** and **everydukan**: Install Next.js dependencies.
-     ```bash
-     cd d2cdashboard
-     npm install
+2. Navigate to the folder you want to work on (e.g., `App`, `Function`).
+3. Follow the specific setup instructions provided in the folder's README.
 
-     cd ../everydukan
-     npm install
-     ```
+---
 
-### Running the Applications
-- **App**: Use Flutter tools to run the mobile application.
+## Deployment
+
+### App
+- Build the Flutter application using:
   ```bash
-  flutter run
+  flutter build apk
   ```
-- **Function**: Deploy the backend services to AWS Lambda.
+
+### Backend (Function Folder)
+- Deploy the backend services to AWS Lambda:
   ```bash
-  npm run deploy
+  serverless deploy
   ```
-- **d2cdashboard**: Start the admin dashboard in development mode.
+
+### Admin Dashboard
+- Build and deploy the Next.js admin dashboard:
   ```bash
-  npm run dev
+  npm run build
+  npm start
   ```
-- **everydukan**: Start the homepage in development mode.
+
+### Homepage
+- Deploy the homepage using your preferred hosting provider (e.g., Vercel):
   ```bash
-  npm run dev
+  npm run build
+  npm start
   ```
+
+---
+
+## Contributing
+
+We welcome contributions to improve EveryDukan. Please follow these steps:
+1. Fork the repository.
+2. Create a feature branch.
+3. Commit your changes and push them to your fork.
+4. Create a pull request for review.
  
