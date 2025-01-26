@@ -11,7 +11,7 @@ interface Feature {
 
 const Home = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const playStoreUrl = "https://play.google.com/store/apps/details?id=com.everydukan";
+  const playStoreUrl = "https://github.com/sushilpandeyy/everydukan";
 
   const features: Feature[] = [
     {

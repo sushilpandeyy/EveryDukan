@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Home, HelpCircle, FileText, Settings, Download, ShoppingBag, Tag, Bell, Instagram, Twitter, ShoppingCart } from 'lucide-react';
 
 const Footer = () => {
-  const playStoreUrl = "https://play.google.com/store/apps/details?id=com.deals.d2c";
+  const playStoreUrl = "https://github.com/sushilpandeyy/everydukan";
 
   // Pre-footer CTA Section
   const PreFooterCTA = () => (
