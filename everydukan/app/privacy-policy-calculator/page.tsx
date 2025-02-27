@@ -42,7 +42,8 @@ export default function PrivacyPolicy() {
         <h2>How Your Data is Secured</h2>
         <p>
           We use industry-standard encryption to ensure that your hidden files remain secure on your device.
-          Your data is never transmitted to external servers or shared with third parties.
+          Your data is never transmitted to external servers or shared with third parties. We are committed to
+          protecting your data and follow best security practices as per Play Store guidelines.
         </p>
       </section>
 
@@ -71,12 +72,13 @@ export default function PrivacyPolicy() {
       <section>
         <h2>Account and Data Deletion</h2>
         <p>
-          Users can delete their accounts and stored data at any time:
+          Users can request to delete their account and data at any time by following these steps:
         </p>
         <ul>
           <li>Account deletion can be initiated from the app settings.</li>
           <li>Hidden files are removed upon user action and cannot be recovered.</li>
           <li>We do not retain any backup of user data.</li>
+          <li>To request full account deletion, please fill out our <a href="https://forms.gle/TRaPvfMnuU28aR3C8" target="_blank">Account Deletion Request Form</a>.</li>
         </ul>
       </section>
 
