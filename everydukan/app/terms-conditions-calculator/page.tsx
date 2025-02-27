@@ -55,7 +55,7 @@ export default function TermsAndConditions() {
           <li><strong>Biometric Authentication:</strong> To enhance security using fingerprint or facial recognition.</li>
         </ul>
         <p>
-          We do not collect or store personal data on external servers. All data remains on the user's device. For more details, please refer to our <a href="/privacy-policy">Privacy Policy</a>.
+          We do not collect or store personal data on external servers. All data remains on the user's device. For more details, please refer to our <a href="/privacy-policy-calculator">Privacy Policy</a>.
         </p>
       </section>
 
